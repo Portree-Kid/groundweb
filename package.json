@@ -1,0 +1,33 @@
+{
+  "name": "groundweb.flightgear.org",
+  "version": "0.0.1",
+  "description": "Services to add groundnets for airports",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Portree-Kid/groundweb.git"
+  },
+  "keywords": [
+    "flightgear",
+    "groundnet"
+  ],
+  "author": "Keith Paterson",
+  "license": "GPL-2.0",
+  "bugs": {
+    "url": "https://github.com/Portree-Kid/groundweb/issues"
+  },
+  "homepage": "https://github.com/Portree-Kid/groundweb#readme",
+  "devDependencies": {
+    "nodemon": "^1.18.10"
+  },
+  "dependencies": {
+    "express": "^4.16.4",
+    "express-fileupload": "^1.1.2-alpha.1",
+    "express-promise-router": "^3.0.3",
+    "libxmljs": "^0.19.5",
+    "pg": "^7.8.1"
+  }
+}

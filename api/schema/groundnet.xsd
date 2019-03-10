@@ -1,0 +1,75 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="groundnet" type="groundnetType"/>
+  <xs:complexType name="frequenciesType">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element type="xs:integer" name="AWOS"  maxOccurs="unbounded"/>
+      <xs:element type="xs:integer" name="CLEARANCE"  maxOccurs="unbounded"/>
+      <xs:element type="xs:integer" name="GROUND" maxOccurs="unbounded"/>
+      <xs:element type="xs:integer" name="TOWER" maxOccurs="unbounded"/>
+      <xs:element type="xs:integer" name="APPROACH" maxOccurs="unbounded"/>
+      <xs:element type="xs:integer" name="DEPARTURE" maxOccurs="unbounded"/>
+      <xs:element type="xs:integer" name="UNICOM" maxOccurs="unbounded"/>
+    </xs:choice>
+  </xs:complexType>
+  <xs:complexType name="ParkingType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:short" name="index" use="optional"/>
+        <xs:attribute type="xs:string" name="type" use="optional"/>
+        <xs:attribute type="xs:string" name="name" use="optional"/>
+        <xs:attribute type="xs:string" name="number" use="optional"/>
+        <xs:attribute type="xs:string" name="lat" use="optional"/>
+        <xs:attribute type="xs:string" name="lon" use="optional"/>
+        <xs:attribute type="xs:float" name="heading" use="optional"/>
+        <xs:attribute type="xs:float" name="radius" use="optional"/>
+        <xs:attribute type="xs:short" name="pushBackRoute" use="optional"/>
+        <xs:attribute type="xs:string" name="airlineCodes" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="parkingListType">
+    <xs:sequence>
+      <xs:element type="ParkingType" name="Parking" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="nodeType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:short" name="index" use="optional"/>
+        <xs:attribute type="xs:string" name="lat" use="optional"/>
+        <xs:attribute type="xs:string" name="lon" use="optional"/>
+        <xs:attribute type="xs:byte" name="isOnRunway" use="optional"/>
+        <xs:attribute type="xs:string" name="holdPointType" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="TaxiNodesType">
+    <xs:choice maxOccurs="unbounded" minOccurs="0">
+      <xs:element type="nodeType" name="node"/>
+    </xs:choice>
+  </xs:complexType>
+  <xs:complexType name="arcType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:short" name="begin" use="optional"/>
+        <xs:attribute type="xs:short" name="end" use="optional"/>
+        <xs:attribute type="xs:byte" name="isPushBackRoute" use="optional"/>
+        <xs:attribute type="xs:string" name="name" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="TaxiWaySegmentsType">
+    <xs:sequence>
+      <xs:element type="arcType" name="arc" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="groundnetType">
+    <xs:sequence>
+      <xs:element type="xs:byte" name="version" minOccurs="0"/>
+      <xs:element type="frequenciesType" name="frequencies" minOccurs="0"/>
+      <xs:element type="parkingListType" name="parkingList"/>
+      <xs:element type="TaxiNodesType" name="TaxiNodes" minOccurs="0"/>
+      <xs:element type="TaxiWaySegmentsType" name="TaxiWaySegments" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>
