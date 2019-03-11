@@ -1,3 +1,4 @@
+const util = require('util');
 const assert = require('assert');
 const Router = require('express-promise-router')
 const fileUpload = require('express-fileupload');
@@ -29,15 +30,15 @@ module.exports = router;
 router.post('/upload', function(req, res) {
 	res.setHeader('Content-Type', 'application/json');
 	if (!req.files) {
-		res.send(JSON.stringify("No file provided"));
+		res.send(JSON.stringify({message:"No file provided"}));
 		return;
 	}
 	if (!req.files.groundnet) {
-		res.send(JSON.stringify("No file provided"));
+		res.send(JSON.stringify({message:"No file provided"}));
 		return;
 	}
 	if (!req.files.groundnet.name) {
-		res.send(JSON.stringify("No Filename provided"));
+		res.send(JSON.stringify({message:"No Filename provided"}));
 		return;
 	}
 	var sitemapDoc;
@@ -47,30 +48,42 @@ router.post('/upload', function(req, res) {
 		sitemapDoc = libxmljs.parseXml(req.files.groundnet.data);
 		schemaDoc = libxmljs.parseXml(schema);
 		} catch (e) {
-			res.send(JSON.stringify(e, replaceErrors));
+			res.send(JSON.stringify({message:"XML Errors", e}, replaceErrors));
 			return;
 		}
 
 	// Perform validation
 	const isValid = sitemapDoc.validate(schemaDoc);
 	if (!isValid) {
-		res.send(JSON.stringify(sitemapDoc.validationErrors, replaceErrors));
+		var validationErrors = sitemapDoc.validationErrors;
+		res.send(JSON.stringify( {message:"XML Errors", validationErrors}, replaceErrors));
 		return;
 	}
-	console.log(airports.findAirport(req.files.groundnet.name.substr(0, req.files.groundnet.name.indexOf('.')) ));
+	var icao = req.files.groundnet.name.substring(0,4);
 	var airport;
-	airports.findAirport(req.params.icao, (err, result) => {
-		console.log("Result " + result);
+	airports.findAirport(icao).then( (result, err) => {
 	    if (err) {
-	      return console.error('Error executing query', err.stack)
+		      console.error('Error executing query', err);
+	      res.sendStatus(500);
+	      return;
 	    }
-		if (!result.rows) {
-			console.log(airports.findAirport(req.params.icao));
-			res.send(JSON.stringify("Airport doesn't exist " + airports.findAirport(req.params.icao)));
+		console.log("Result " + result);
+		if (!result.rows) {			
+			res.send(JSON.stringify({message:"Airport doesn't exist"}));
 			return;
 		}
-		res.sendStatus(200);
-	  });
+		var path = util.format("./%s/%s/%s/", icao[0], icao[1], icao[2])
+		fs.mkdirSync(path, { recursive: true }, (err) => {
+		      console.error('Error creating path', err);
+			  res.sendStatus(500);
+			  return;
+			});
+		fs.writeFileSync(path + '/' + req.files.groundnet.name, req.files.groundnet.data);
+		res.send(JSON.stringify({message:"Imported Successfully"}));
+	  }).catch((error) => {
+		  console.log(error);
+		  res.sendStatus(500);
+	    });
 });
 console.log('Mounted groundnet routes');
 
