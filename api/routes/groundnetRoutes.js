@@ -5,7 +5,9 @@ const fileUpload = require('express-fileupload');
 var libxmljs = require('libxmljs');
 const fs = require('fs');
 const path = require("path")
-const sha1File = require('sha1-file')
+//const sha1File = require('sha1-file')
+const sha1Hash = require('js-sha1')
+
 
 const airports = require('../airports');
 
@@ -74,7 +76,7 @@ router.post('/upload', function(req, res) {
 			res.send(JSON.stringify({message:"Airport doesn't exist"}));
 			return;
 		}
-		var currentpath = util.format("/Airports/%s/%s/%s/", icao[0], icao[1], icao[2])
+		var currentpath = util.format("/Airports/%s/%s/%s", icao[0], icao[1], icao[2])
 		fs.mkdirSync(currentpath, { recursive: true }, (err) => {
 		      console.error('Error creating currentpath', err);
 			  res.sendStatus(500);
@@ -121,28 +123,39 @@ function replaceErrors(key, value) {
 function buildDirIndex(currentpath) {
 	console.log(`writing .dirindex to ${currentpath}`);
 	var absolutePath = path.join(process.cwd(), currentpath);
-	var wstream = fs.createWriteStream(path.join( absolutePath, '.dirindex'));
-	wstream.write('version:1\n');
+	
+	var wstream = fs.openSync(path.join( absolutePath, '.dirindex'), "a+");
+	fs.writeSync(wstream,'version:1\n');
 	var cleanedPath = currentpath.slice(1).replace(/\\/g,"/");
-	wstream.write(`path:${cleanedPath}\n`);
+	fs.writeSync(wstream,`path:${cleanedPath}\n`);
 	
 	fs.readdirSync(absolutePath, {withFileTypes:true})
 	.filter(file => file.name != ".dirindex" )
 	.forEach(file => {
 		if(file.isFile()){
-			  var sha1 = sha1File( path.join(absolutePath, file.name) );
-			  var size = fs.statSync( path.join(absolutePath, file.name) ).size;
-  			  wstream.write(`f:${file.name}:${sha1}:${size}\n`);
+			  var sha1 = sha1Hash( fs.readFileSync(path.join(absolutePath, file.name)) );
+			  var size = fs.statSync(path.join(absolutePath, file.name) ).size;
+  			  fs.writeSync(wstream,`f:${file.name}:${sha1}:${size}\n`);
 		  }
 		if(file.isDirectory()){
-			var dirIndexFile = path.join( path.join(absolutePath, file.name), ".dirindex");
-			if(fs.existsSync(dirIndexFile)){
-			  var sha1 = sha1File( dirIndexFile );
-//			  console.log(`d:${file.name}:${sha1}`);
-			  wstream.write(`d:${file.name}:${sha1}\n`);
-			}
-		}
-	});
-	wstream.end();
-	
+			var subDir = path.join(absolutePath, file.name);
+			fs.readdirSync(subDir, {withFileTypes:true})
+			.filter(subfile => subfile.name == ".dirindex" )
+			.forEach(subfile => {
+				if(subfile.isFile()){
+					console.log(`Building hash for ${subDir}`);
+					var fileContent = fs.readFileSync(path.join(subDir, subfile.name), {encoding:'ascii'});
+					if(!fileContent.startsWith("version:1")){
+						console.log(fileContent);
+						throw new Error();
+					}
+ 				    sha1 = sha1Hash( fileContent );
+					  console.log( path.join(subDir, subfile.name));
+					  console.log(sha1);
+				}
+				})			
+	   		    fs.writeSync(wstream,`d:${file.name}:${sha1}\n`);
+		    }		    
+		})
+	console.log(`wrote .dirindex to ${currentpath}`);
 	}
