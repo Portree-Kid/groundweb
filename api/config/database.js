@@ -150,6 +150,7 @@ module.exports.GetAirportByIcao = function( icao, cb )
       values: [ icao ]
   }, function(err,result) {
     if( err ) return cb(err);
+    if( !result ) return cb(null,null);
     var Airport = {
       icao : result.icao
     };

@@ -11,7 +11,7 @@ const sha1Hash = require('js-sha1')
 
 var DB = require('../config/database');
 
-const terraSyncDir = 'public/';
+const terraSyncDir = 'public';
 
 const schema = fs.readFileSync('schema/groundnet.xsd');
 
