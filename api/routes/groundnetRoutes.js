@@ -5,11 +5,13 @@ const fileUpload = require('express-fileupload');
 var libxmljs = require('libxmljs');
 const fs = require('fs');
 const path = require("path")
-//const sha1File = require('sha1-file')
+// const sha1File = require('sha1-file')
 const sha1Hash = require('js-sha1')
 
 
-const airports = require('../airports');
+var DB = require('../config/database');
+
+const terraSyncDir = 'public/';
 
 const schema = fs.readFileSync('schema/groundnet.xsd');
 
@@ -45,54 +47,65 @@ router.post('/upload', function(req, res) {
 		res.send(JSON.stringify({message:"No Filename provided"}));
 		return;
 	}
-	var sitemapDoc;
-	var schemaDoc;
-	// Parse the sitemap and schema
-	try {
-		sitemapDoc = libxmljs.parseXml(req.files.groundnet.data);
-		schemaDoc = libxmljs.parseXml(schema);
-		} catch (e) {
-			res.send(JSON.stringify({message:"XML Errors", e}, replaceErrors));
+	var user;
+	console.log(req.body);
+	DB.getUserByEmail(req.body.user_email, function(err,user) {
+		if(err)	{
+			res.send(JSON.stringify({message:"Error getting user", err}, replaceErrors));
 			return;
+        }
+		if(!user) {
+			res.send(JSON.stringify({message:"User unknown", user}));
+			return;			
 		}
+		console.log(user);
+		var sitemapDoc;
+		var schemaDoc;
+		// Parse the sitemap and schema
+		try {
+			sitemapDoc = libxmljs.parseXml(req.files.groundnet.data);
+			schemaDoc = libxmljs.parseXml(schema);
+			} catch (e) {
+				res.send(JSON.stringify({message:"XML Errors", e}, replaceErrors));
+				return;
+			}
 
-	// Perform validation
-	const isValid = sitemapDoc.validate(schemaDoc);
-	if (!isValid) {
-		var validationErrors = sitemapDoc.validationErrors;
-		res.send(JSON.stringify( {message:"XML Errors", validationErrors}, replaceErrors));
-		return;
-	}
-	var icao = req.files.groundnet.name.substring(0,4);
-	var airport;
-	airports.findAirport(icao).then( (result, err) => {
-	    if (err) {
-		      console.error('Error executing query', err);
-	      res.sendStatus(500);
-	      return;
-	    }
-		console.log("Result " + result);
-		if (!result.rows) {			
-			res.send(JSON.stringify({message:"Airport doesn't exist"}));
+		// Perform validation
+		const isValid = sitemapDoc.validate(schemaDoc);
+		if (!isValid) {
+			var validationErrors = sitemapDoc.validationErrors;
+			res.send(JSON.stringify( {message:"XML Errors", validationErrors}, replaceErrors));
 			return;
 		}
-		var currentpath = util.format("/Airports/%s/%s/%s", icao[0], icao[1], icao[2])
-		fs.mkdirSync(currentpath, { recursive: true }, (err) => {
-		      console.error('Error creating currentpath', err);
-			  res.sendStatus(500);
-			  return;
-			});
-		fs.writeFileSync(currentpath + req.files.groundnet.name, req.files.groundnet.data);
-		do{
-			buildDirIndex(currentpath);			
-		}
-		while((currentpath = path.join( currentpath, "..")) != path.sep)
-		
-		res.send(JSON.stringify({message:"Imported Successfully"}));
-	  }).catch((error) => {
-		  console.log(error);
-		  res.sendStatus(500);
-	    });
+		var icao = req.files.groundnet.name.substring(0,4);
+		DB.GetAirportByIcao(icao, function(err,airport) {
+		    if (err) {
+			  console.error('Error executing query', err);
+		      res.sendStatus(500);
+		      return;
+		    }
+			console.log("Result " + airport);
+			if (!airport) {			
+				res.send(JSON.stringify({message:"Airport doesn't exist"}));
+				return;
+			}
+			var currentpath = util.format(terraSyncDir + "/Airports/%s/%s/%s", icao[0], icao[1], icao[2])
+			fs.mkdirSync(currentpath, { recursive: true }, (err) => {
+			      console.error('Error creating currentpath', err);
+				  res.sendStatus(500);
+				  return;
+				});
+			fs.writeFileSync(currentpath + req.files.groundnet.name, req.files.groundnet.data);
+			do{
+				buildDirIndex(currentpath);						
+			}
+			while((currentpath = path.resolve( currentpath, "..")) != path.resolve(terraSyncDir))
+			
+			res.write(JSON.stringify({message:"Imported Successfully"}));
+			res.end();
+			return;
+		  });
+	});
 });
 console.log('Mounted groundnet routes');
 
@@ -122,7 +135,7 @@ function replaceErrors(key, value) {
 
 function buildDirIndex(currentpath) {
 	console.log(`writing .dirindex to ${currentpath}`);
-	var absolutePath = path.join(process.cwd(), currentpath);
+	var absolutePath = path.resolve(currentpath);
 	
 	var wstream = fs.openSync(path.join( absolutePath, '.dirindex'), "a+");
 	fs.writeSync(wstream,'version:1\n');

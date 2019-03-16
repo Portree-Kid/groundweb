@@ -1,3 +1,6 @@
+var compression = require('compression');
+var helmet = require('helmet');
+
 var express = require('express'), app = express(), port = process.env.PORT || 3000;
 
 var errorHandler = function(err, req, res, next) {
@@ -5,11 +8,14 @@ var errorHandler = function(err, req, res, next) {
 	res.sendStatus(500);
 };
 
+app.use(express.static('public'));
+
 bodyParser = require('body-parser');
 
 const mountRoutes = require('./api/routes');
 
-require('./db'); 
+app.use(compression());
+app.use(helmet());
 
 app.use(bodyParser.urlencoded({
 	extended : true
