@@ -48,17 +48,16 @@ router.post('/upload', function(req, res) {
 		return;
 	}
 	var user;
-	console.log(req.body);
 	DB.getUserByEmail(req.body.user_email, function(err,user) {
 		if(err)	{
 			res.send(JSON.stringify({message:"Error getting user", err}, replaceErrors));
 			return;
         }
-		if(!user) {
-			res.send(JSON.stringify({message:"User unknown", user}));
-			return;			
-		}
-		console.log(user);
+//		if(!user) {
+//			res.send(JSON.stringify({message:"User unknown", user}));
+//			return;			
+//		}
+//		console.log(user);
 		var sitemapDoc;
 		var schemaDoc;
 		// Parse the sitemap and schema
