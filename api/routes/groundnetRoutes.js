@@ -111,7 +111,7 @@ router.post('/upload', function(req, res) {
 console.log('Mounted groundnet routes');
 
 function createPath(currentpath, res){
-	if( fs.exist(currenpath))
+	if(fs.existsSync(currentpath))
 		return;
 	fs.mkdirSync(currentpath, { recursive: true }, (err) => {
 	      console.error('Error creating path', err);
