@@ -89,29 +89,13 @@ router.post('/upload', function(req, res) {
 				return;
 			}
 			var currentpath = path.join(terraSyncDir, "/Airports/");
-			fs.mkdirSync(currentpath, { recursive: true }, (err) => {
-			      console.error('Error creating path', err);
-				  res.sendStatus(500);
-				  return;
-				});
+			createDir(currentpath, res);
 			currentpath = path.join(currentpath,icao[0]);
-			fs.mkdirSync(currentpath, { recursive: true }, (err) => {
-			      console.error('Error creating path', err);
-				  res.sendStatus(500);
-				  return;
-				});
+			createDir(currentpath, res);
 			currentpath = path.join(currentpath,icao[1]);
-			fs.mkdirSync(currentpath, { recursive: true }, (err) => {
-			      console.error('Error creating path', err);
-				  res.sendStatus(500);
-				  return;
-				});
+			createDir(currentpath, res);
 			currentpath = path.join(currentpath,icao[2]);
-			fs.mkdirSync(currentpath, { recursive: true }, (err) => {
-			      console.error('Error creating path', err);
-				  res.sendStatus(500);
-				  return;
-				});
+			createDir(currentpath, res);
 			fs.writeFileSync(currentpath + req.files.groundnet.name, req.files.groundnet.data);
 			do{
 				buildDirIndex(currentpath);						
@@ -125,6 +109,17 @@ router.post('/upload', function(req, res) {
 	});
 });
 console.log('Mounted groundnet routes');
+
+function createPath(currentpath, res){
+	if( fs.exist(currenpath))
+		return;
+	fs.mkdirSync(currentpath, { recursive: true }, (err) => {
+	      console.error('Error creating path', err);
+		  res.sendStatus(500);
+		  return;
+		});
+}
+
 
 /**
  * Error objects are not correctly processed by stringify
