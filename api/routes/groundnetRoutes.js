@@ -88,9 +88,27 @@ router.post('/upload', function(req, res) {
 				res.send(JSON.stringify({message:"Airport doesn't exist"}));
 				return;
 			}
-			var currentpath = util.format(terraSyncDir + "/Airports/%s/%s/%s", icao[0], icao[1], icao[2])
+			var currentpath = path.join(terraSyncDir, "/Airports/");
 			fs.mkdirSync(currentpath, { recursive: true }, (err) => {
-			      console.error('Error creating currentpath', err);
+			      console.error('Error creating path', err);
+				  res.sendStatus(500);
+				  return;
+				});
+			currentpath = path.join(currentpath,icao[0]);
+			fs.mkdirSync(currentpath, { recursive: true }, (err) => {
+			      console.error('Error creating path', err);
+				  res.sendStatus(500);
+				  return;
+				});
+			currentpath = path.join(currentpath,icao[1]);
+			fs.mkdirSync(currentpath, { recursive: true }, (err) => {
+			      console.error('Error creating path', err);
+				  res.sendStatus(500);
+				  return;
+				});
+			currentpath = path.join(currentpath,icao[2]);
+			fs.mkdirSync(currentpath, { recursive: true }, (err) => {
+			      console.error('Error creating path', err);
 				  res.sendStatus(500);
 				  return;
 				});
