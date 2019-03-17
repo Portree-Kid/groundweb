@@ -157,6 +157,8 @@ function buildDirIndex(currentpath) {
 	fs.readdirSync(absolutePath, {withFileTypes:true})
 	.filter(file => file.name != ".dirindex" )
 	.forEach(file => {
+		console.log(absolutePath);
+		console.log(file);
 		var stat = fs.lstatSync(path.join(absolutePath, file.name));
 		if(stat.isFile()){
 			  var sha1 = sha1Hash( fs.readFileSync(path.join(absolutePath, file.name)) );
