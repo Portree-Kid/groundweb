@@ -89,13 +89,13 @@ router.post('/upload', function(req, res) {
 				return;
 			}
 			var currentpath = path.join(terraSyncDir, "/Airports/");
-			createDir(currentpath, res);
+			createPath(currentpath, res);
 			currentpath = path.join(currentpath,icao[0]);
-			createDir(currentpath, res);
+			createPath(currentpath, res);
 			currentpath = path.join(currentpath,icao[1]);
-			createDir(currentpath, res);
+			createPath(currentpath, res);
 			currentpath = path.join(currentpath,icao[2]);
-			createDir(currentpath, res);
+			createPath(currentpath, res);
 			fs.writeFileSync(currentpath + req.files.groundnet.name, req.files.groundnet.data);
 			do{
 				buildDirIndex(currentpath);						
