@@ -157,12 +157,13 @@ function buildDirIndex(currentpath) {
 	fs.readdirSync(absolutePath, {withFileTypes:true})
 	.filter(file => file.name != ".dirindex" )
 	.forEach(file => {
-		if(file.isFile()){
+		var stat = fs.lstatSync(file);
+		if(stat.isFile()){
 			  var sha1 = sha1Hash( fs.readFileSync(path.join(absolutePath, file.name)) );
 			  var size = fs.statSync(path.join(absolutePath, file.name) ).size;
   			  fs.writeSync(wstream,`f:${file.name}:${sha1}:${size}\n`);
 		  }
-		if(file.isDirectory()){
+		if(stat.isDirectory()){
 			var subDir = path.join(absolutePath, file.name);
 			fs.readdirSync(subDir, {withFileTypes:true})
 			.filter(subfile => subfile.name == ".dirindex" )
