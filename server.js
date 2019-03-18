@@ -9,8 +9,6 @@ var errorHandler = function(err, req, res, next) {
 	res.sendStatus(500);
 };
 
-app.use(express.static('public', {'hidden' :true}), serveIndex('public', {'icons': false, 'hidden' :true}));
-
 bodyParser = require('body-parser');
 
 const mountRoutes = require('./api/routes');
@@ -24,6 +22,9 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 mountRoutes(app);
+//Must be after the content
+app.use(express.static('public', {'hidden' :true}), serveIndex('public', {'icons': false, 'hidden' :true}, styleSheet='page.css'));
+
 
 // app.use(notFound); // your page not found interceptor
 app.use(errorHandler);
