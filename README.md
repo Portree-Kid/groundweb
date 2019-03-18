@@ -9,9 +9,9 @@ Groundnets can be submitted via HTTP POST to the URL [http://localhost:3000/grou
  The file is checked against a series of checks. 
 1. Parsable XML
 2. [XSD](https://raw.githubusercontent.com/Portree-Kid/groundweb/master/schema/groundnet.xsd) check 
-3. Check if airport exists in scenery
+3. Check if airport exists in scenery (DB apt_airfield)
 4. [TODO] Existence of runways
 5. [TODO] Uniqueness of parking spots
 4. Save File
-5. [TODO] md5 file
+5. SHA1 file
  
