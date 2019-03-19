@@ -76,7 +76,13 @@ router.post('/upload', function(req, res) {
 			res.send(JSON.stringify( {message:"XML Errors", validationErrors}, replaceErrors));
 			return;
 		}
-		var icao = req.files.groundnet.name.substring(0,4);
+		var groundnetRegex = '([0-9A-Z]{3,4})\\.groundnet\\.xml';
+		var result = req.files.groundnet.name.match(groundnetRegex);
+		if (!result) {
+			res.send(JSON.stringify( {message:"Filename doesn't match ([0-9A-Z]{3,4})\\.groundnet\\.xml"}, replaceErrors));
+			return;
+		}
+		var icao = result[1];
 		DB.GetAirportByIcao(icao, function(err,airport) {
 		    if (err) {
 			  console.error('Error executing query', err);
