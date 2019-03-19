@@ -53,6 +53,7 @@ router.post('/upload', function(req, res) {
 			res.send(JSON.stringify({message:"Error getting user", err}, replaceErrors));
 			return;
         }
+		//TODO User Check in Production
 //		if(!user) {
 //			res.send(JSON.stringify({message:"User unknown", user}));
 //			return;			
@@ -69,19 +70,28 @@ router.post('/upload', function(req, res) {
 				return;
 			}
 
-		// Perform validation
-		const isValid = sitemapDoc.validate(schemaDoc);
-		if (!isValid) {
-			var validationErrors = sitemapDoc.validationErrors;
-			res.send(JSON.stringify( {message:"XML Errors", validationErrors}, replaceErrors));
-			return;
-		}
+		//Check Filename
 		var groundnetRegex = '([0-9A-Z]{3,4})\\.groundnet\\.xml';
 		var result = req.files.groundnet.name.match(groundnetRegex);
 		if (!result) {
 			res.send(JSON.stringify( {message:"Filename doesn't match ([0-9A-Z]{3,4})\\.groundnet\\.xml"}, replaceErrors));
 			return;
 		}
+		// Perform XML validation
+		const isValid = sitemapDoc.validate(schemaDoc);
+		if (!isValid) {
+			var validationErrors = sitemapDoc.validationErrors;
+			res.send(JSON.stringify( {message:"XML Errors", validationErrors}, replaceErrors));
+			return;
+		}
+		var gates = sitemapDoc.find('/groundnet/parkingList/Parking[@type="gate"]');
+		console.log(gates);
+		console.log(gates.length);
+		if(gates.length==0){
+			res.send(JSON.stringify( {message:"No gates, traffic won't work"}, replaceErrors));
+			return;			
+		}
+		//Does Airport exist?
 		var icao = result[1];
 		DB.GetAirportByIcao(icao, function(err,airport) {
 		    if (err) {
@@ -174,15 +184,15 @@ function buildDirIndex(currentpath) {
 			.filter(subfile => subfile.name == ".dirindex" )
 			.forEach(subfile => {
 				if(subfile.isFile()){
-					console.log(`Building hash for ${subDir}`);
+//					console.log(`Building hash for ${subDir}`);
 					var fileContent = fs.readFileSync(path.join(subDir, subfile.name), {encoding:'ascii'});
 					if(!fileContent.startsWith("version:1")){
-						console.log(fileContent);
+//						console.log(fileContent);
 						throw new Error();
 					}
  				    sha1 = sha1Hash( fileContent );
-					  console.log( path.join(subDir, subfile.name));
-					  console.log(sha1);
+//					  console.log( path.join(subDir, subfile.name));
+//					  console.log(sha1);
 				}
 				})			
 	   		    fs.writeSync(wstream,`d:${file.name}:${sha1}\n`);
