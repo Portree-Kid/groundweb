@@ -1,6 +1,15 @@
 <html>
-<form method="post" enctype="multipart/form-data" action="groundnets/upload">
-  <label>Email (currently not checked or stored) </label> <input name="user_email" type="text"/>  
+<style type="text/css">
+
+iframe {
+width: 300px;
+height: 100px;
+}
+
+</style>
+
+<form method="post" enctype="multipart/form-data" action="groundnets/upload" target="result">
+  <label>Email (not checked but used for commit) </label> <input name="user_email" type="text"/>  
   
   <br>
   <label>Your groundnet
@@ -8,6 +17,7 @@
   </label>  
   <button>Upload</button>
 </form>
-<a href="/Airports/"/>Uploaded content (TerraSync compatible)</a>
+<a href="/Airports/"/>Uploaded content &#40; TerraSync compatible &#41;</a><br>
+<iframe name="result"></iframe>
 
 </html>

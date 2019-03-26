@@ -12,7 +12,7 @@ var committer = NodeGit.Signature.now("Groundweb",
 	"terrasync@github.com");
 
 
-module.exports.clone2 = function (localPath, name, email, saveFunction, errCb) {
+module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, okCb) {
 	console.log("Cloning " + localPath);
 
 	// Using the `clone` method from the `Git.Clone` module, bring down the
@@ -63,7 +63,7 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb) {
 			// Access any repository methods here.
 			repository.fetchAll(myFetchOpts)
 				.then(function () {
-					console.log("Fetched ");
+					console.log("Fetched");
 					var mergeOptions = new NodeGit.MergeOptions();
 					repository.mergeBranches("master", "origin/master", NodeGit.Signature.default(repository), NodeGit.Merge.PREFERENCE.NONE, mergeOptions)
 						.then(function (oid) {
@@ -145,6 +145,7 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb) {
 											);
 										})
 										.catch(errCb)
+									    .then( okCb);
 								})
 								.catch(errCb)
 						}).catch(errCb);

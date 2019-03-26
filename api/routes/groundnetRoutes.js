@@ -129,10 +129,12 @@ router.post('/upload', function(req, res) {
 				}
 				while((currentpath = path.resolve( currentpath, "..")) != path.resolve(terraSyncDir))				
 			}
-			git.clone2(gitPath, icao, req.body.user_email, writecb, errCb);
-			console.log(icao + "Imported Successfully");
-			res.write(JSON.stringify({message: "" + icao + "Imported Successfully"}));
-			res.end();
+			var okCb = function (){
+				console.log(icao + " Imported Successfully");
+				res.write(JSON.stringify({message: "" + icao + "Imported Successfully"}));
+				res.end();
+			}
+			git.clone2(gitPath, icao, req.body.user_email, writecb, errCb, okCb);			
 		  });
 	});
 });
