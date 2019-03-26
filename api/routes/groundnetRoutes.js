@@ -3,6 +3,8 @@ const assert = require('assert');
 const Router = require('express-promise-router')
 const fileUpload = require('express-fileupload');
 var libxmljs = require('libxmljs');
+var nodegit = require("nodegit");
+
 const fs = require('fs');
 const path = require("path")
 // const sha1File = require('sha1-file')
@@ -10,6 +12,7 @@ const sha1Hash = require('js-sha1')
 
 
 var DB = require('../config/database');
+var git = require('../util/git.js');
 
 const terraSyncDir = 'public';
 
@@ -99,28 +102,37 @@ router.post('/upload', function(req, res) {
 		      res.sendStatus(500);
 		      return;
 		    }
-			console.log("Result " + airport);
+			console.log("Result Airportdata : " + airport);
 			if (!airport) {			
 				res.send(JSON.stringify({message:"Airport doesn't exist"}));
 				return;
 			}
-			var currentpath = path.join(terraSyncDir, "/Airports/");
-			createPath(currentpath, res);
-			currentpath = path.join(currentpath,icao[0]);
-			createPath(currentpath, res);
-			currentpath = path.join(currentpath,icao[1]);
-			createPath(currentpath, res);
-			currentpath = path.join(currentpath,icao[2]);
-			createPath(currentpath, res);
-			fs.writeFileSync(currentpath + req.files.groundnet.name, req.files.groundnet.data);
-			do{
-				buildDirIndex(currentpath);						
+			var gitPath = path.resolve(path.join(terraSyncDir, "/main/"));
+			var errCb = function (err) {
+			    if (err) {
+			        console.error(err);
+			        git.removeBranch(gitPath, icao);
+			        res.send(JSON.stringify({message:"Error in GIT", err}, replaceErrors));
+			    }};
+			var writecb = function () {
+				var currentpath = path.join(gitPath, "/Airports/");
+				createPath(currentpath, res);
+				currentpath = path.join(currentpath,icao[0]);
+				createPath(currentpath, res);
+				currentpath = path.join(currentpath,icao[1]);
+				createPath(currentpath, res);
+				currentpath = path.join(currentpath,icao[2]);
+				createPath(currentpath, res);
+				fs.writeFileSync(currentpath + req.files.groundnet.name, req.files.groundnet.data);
+				do{
+					buildDirIndex(currentpath);						
+				}
+				while((currentpath = path.resolve( currentpath, "..")) != path.resolve(terraSyncDir))				
 			}
-			while((currentpath = path.resolve( currentpath, "..")) != path.resolve(terraSyncDir))
-			
-			res.write(JSON.stringify({message:"Imported Successfully"}));
+			git.clone2(gitPath, icao, req.body.user_email, writecb, errCb);
+			console.log(icao + "Imported Successfully");
+			res.write(JSON.stringify({message: "" + icao + "Imported Successfully"}));
 			res.end();
-			return;
 		  });
 	});
 });
@@ -165,7 +177,7 @@ function buildDirIndex(currentpath) {
 	console.log(`writing .dirindex to ${currentpath}`);
 	var absolutePath = path.resolve(currentpath);
 	
-	var wstream = fs.openSync(path.join( absolutePath, '.dirindex'), "a+");
+	var wstream = fs.openSync(path.join( absolutePath, '.dirindex'), "w+");
 	fs.writeSync(wstream,'version:1\n');
 	var cleanedPath = currentpath.slice(1).replace(/\\/g,"/");
 	fs.writeSync(wstream,`path:${cleanedPath}\n`);
