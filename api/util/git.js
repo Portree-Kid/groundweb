@@ -1,11 +1,16 @@
 var NodeGit = require("nodegit");
 var path = require("path");
-var mainRepo = "git@github.com:terrasync/main.git"
+var upath = require("upath");
+var mainRepo = "git@github.com:terrasync/main-test.git"
 
 
 var credCallback = function (url, userName) {
 	console.log("User : " + userName + " Url : " + url);
 	return NodeGit.Cred.sshKeyFromAgent(userName);
+}
+
+var addCb = function( obj){
+   console.log("OBJ : " + JSON.stringify(obj));
 }
 
 var committer = NodeGit.Signature.now("Groundweb",
@@ -23,8 +28,9 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 		callbacks: {
 			certificateCheck: function () { return 0; },
 			credentials: credCallback,
-			transferProgress: function (progress) {
+			transferProgress: function (stats) {
 				try {
+					const progress = (100 * (stats.receivedObjects() + stats.indexedObjects())) / (stats.totalObjects() * 2);
 					console.log('progress: ', progress)
 				}
 				catch (Err) {
@@ -68,86 +74,91 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 					repository.mergeBranches("master", "origin/master", NodeGit.Signature.default(repository), NodeGit.Merge.PREFERENCE.NONE, mergeOptions)
 						.then(function (oid) {
 							console.log("Merged " + oid);
+							var addedPaths;
 							repository.getBranchCommit("master")
 								.then(function (oid) {
-									console.log("Got BranchComit " + oid);
+									console.log("Got Master " + oid);
 									// create the branch
-									NodeGit.Branch.create(repository, name, oid, 0).then(function (branch) {
-										console.log("Branch " + branch);
-										repository.checkoutBranch(branch, {})
-									})
-										// Let the file be saved
-										.then(saveFunction())
-										.then(function () {
-											return repository.refreshIndex();
-										})
-										.then(function (indexResult) {
-											index = indexResult;
-										})
-										.then(function () {
-											var currentpath = path.join(localPath, "/Airports/");
-											currentpath = path.join(currentpath, name[0]);
-											currentpath = path.join(currentpath, name[1]);
-											currentpath = path.join(currentpath, name[2]);
-											index.addByPath(path.resolve(currentpath, name + ".groundnet.xml"));
-											console.log(currentpath);
-											do {
-												index.addByPath(path.resolve(currentpath, ".dirindex"));
-												console.log("Added : " + path.resolve(currentpath, ".dirindex"));
-											}
-											while ((currentpath = path.resolve(currentpath, "..")) != path.resolve(localPath))
-										})
-										.then(function () {
-											return index.addByPath(".dirindex");
-										})
-										.then(function () {
-											// this will write both files to the index
-											return index.write();
-										})
-										.then(function () {
-											return index.writeTree();
-										})
-										.then(function (oidResult) {
-											oid = oidResult;
-											return NodeGit.Reference.nameToId(repository, "HEAD");
-										})
-										.then(function (head) {
-											console.log("Getting " + head);
-											return repository.getCommit(head);
-										})
-										.then(function (parent) {
-											console.log("Oid " + oid);
-											console.log("Parent " + parent);
-
-											var author = NodeGit.Signature.now("--",
-												email);
-
-											return repository.createCommit("HEAD", author, committer, "New Groundnet for " + name, oid, [parent]).then(() => { return repository }).catch(errCb);
-										})
-										.then(function (repository) {
-											console.log("Switching back to master");
-											repository.checkoutBranch("master", {});
-											return repository;
-										})
-										.then(function (repository) {
-											console.log("Getting remote");
-											return repository.getRemote("origin");
-										})
-										.then(function (remote) {
-											var refspec = "refs/heads/" + name + ":refs/heads/" + name;
-											console.log("Add RefSpec " + refspec);
-											NodeGit.Remote.addPush(repository, "origin", refspec);
-											console.log("Push " + refspec);
-											return remote.push(
-												["+" + refspec],
-												myFetchOpts
-												, committer, "Push to master"
-											);
-										})
-										.catch(errCb)
-									    .then( okCb);
+									return NodeGit.Branch.create(repository, name, oid, 0);
+								}
+								)
+								.then(function (branch) {
+									var refspec = "refs/heads/" + name + ":refs/heads/" + name;
+									console.log("Add RefSpec " + refspec + "   " + branch);
+									return NodeGit.Remote.addPush(repository, "origin", refspec);
 								})
-								.catch(errCb)
+								.then(function (reference) {
+									console.log("Checking out branch " + "refs/heads/" + name);
+									return repository.checkoutBranch("refs/heads/" + name, {});
+								})
+								.then(function () {
+									return repository.getReferenceCommit(
+										"refs/heads/" + name);
+								})
+								.then(function (commit) {
+									console.log("Resetting to refs/heads/" + name + " "  + commit);
+									NodeGit.Reset.reset(repository, commit, 3, {});
+								})
+								// Let the file be saved
+								.then(function () { return saveFunction(); })
+								.then(function (paths) {
+									console.log("Refreshing index " + paths);
+									addedPaths = paths.map(p => path.relative(localPath, p));
+									addedPaths = addedPaths.map(p => upath.toUnix(p));
+									return repository.index();
+								})
+								.then(function (indexResult) {
+									index = indexResult;
+									addedPaths.forEach(element => {
+										index.addByPath(element).then((element)=>{index.write();console.log("Added : " + JSON.stringify(element));});
+										
+									});
+//									var result = 
+//									index.addAll(addedPaths, 5, addCb);
+									//.then((result)=>{console.log("Added All : " + JSON.stringify(result));}).catch(errCb);
+//									console.log("Added All : " + JSON.stringify(result));
+									return index.write();
+								})
+								.then(function () {
+									return index.writeTree();
+								})
+								.then((oidResult) => {
+									oid = oidResult;
+									return NodeGit.Reference.nameToId(repository, "HEAD");
+								})
+								.then(function (head) {
+									console.log("Got Head " + head);
+									return repository.getCommit(head);
+								})
+								.then(function (parent) {
+									console.log("Oid " + oid);
+									console.log("Parent Head Commit " + parent);
+
+									var author = NodeGit.Signature.now("--",
+										email);
+									console.log("Committing to refs/heads/" + name);
+									return repository.createCommit("refs/heads/" + name, author, committer, "New Groundnet for " + name, oid, [parent]);
+								})
+								.then(function (commitOid) {
+									console.log("Committed " + commitOid);
+									console.log("Switching back to master");
+									repository.checkoutBranch("master", {});
+									return repository;
+								})
+								.then(function () {
+									return NodeGit.Remote.lookup(repository, "origin");
+								})
+								.then(function (remote) {
+									var refspec = "refs/heads/" + name + ":refs/heads/" + name;
+									console.log("Push " + refspec);
+									return remote.push(
+										["+" + refspec],
+										myFetchOpts
+										, committer, "Push to " + refspec
+									);
+								})
+								.then(okCb)
+								.catch(errCb);
 						}).catch(errCb);
 				}).catch(errCb);
 		});
@@ -189,12 +200,16 @@ module.exports.c1 = function () {
 		});
 }
 
+/**
+ * 
+ */
+
 module.exports.removeBranch = function (localPath, name) {
 	console.log("Removing Branch " + name);
 	NodeGit.Repository.open(localPath)
 		.then(function (repository) {
 			console.log("Switching to master");
-			repository.checkoutBranch("master", {});
+			repository.checkoutBranch("master", { checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE });
 			return repository;
 		})
 		.then(function (repository) {
@@ -204,8 +219,11 @@ module.exports.removeBranch = function (localPath, name) {
 		.then(function (reference) {
 			console.log("Removing Branch " + reference);
 			// remote.push(':refs/heads/my-branch');
-			NodeGit.Branch.delete(reference);
+			return NodeGit.Branch.delete(reference);
+		})
+		.then(function (reference) {
 			console.log("Removed Branch " + reference);
+
 		})
 		.catch((err) => {
 			console.log(err);
