@@ -46,8 +46,12 @@ router.post('/upload', function(req, res) {
 		res.send(JSON.stringify({message:"No file provided"}));
 		return;
 	}
-	if (!req.files.groundnet.name) {
-		res.send(JSON.stringify({message:"No Filename provided"}));
+	if (!req.files.groundnet) {
+		res.send(JSON.stringify({message:"No file provided"}));
+		return;
+	}
+	if (!req.body.user_email) {
+		res.send(JSON.stringify({message:"No E-Mail provided"}));
 		return;
 	}
 	var user;
@@ -123,15 +127,19 @@ router.post('/upload', function(req, res) {
 				createPath(currentpath, res);
 				currentpath = path.join(currentpath,icao[2]);
 				createPath(currentpath, res);
-				fs.writeFileSync(currentpath + req.files.groundnet.name, req.files.groundnet.data);
+				var paths = [];
+				fs.writeFileSync(currentpath + path.sep + req.files.groundnet.name, req.files.groundnet.data, {flag:'w'});
+				paths.push(currentpath + path.sep + req.files.groundnet.name);
 				do{
-					buildDirIndex(currentpath);						
+					paths.push(buildDirIndex(currentpath));						
 				}
 				while((currentpath = path.resolve( currentpath, "..")) != path.resolve(terraSyncDir))				
+				return paths;
 			}
+
 			var okCb = function (){
 				console.log(icao + " Imported Successfully");
-				res.write(JSON.stringify({message: "" + icao + "Imported Successfully"}));
+				res.write(JSON.stringify({message: "" + icao + " Imported Successfully"}));
 				res.end();
 			}
 			git.clone2(gitPath, icao, req.body.user_email, writecb, errCb, okCb);			
@@ -212,5 +220,7 @@ function buildDirIndex(currentpath) {
 	   		    fs.writeSync(wstream,`d:${file.name}:${sha1}\n`);
 		    }		    
 		})
+	fs.closeSync(wstream);
 	console.log(`wrote .dirindex to ${currentpath}`);
+	return path.join( absolutePath, '.dirindex');
 	}
