@@ -63,7 +63,7 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 	// Once the repository has been cloned or opened, you can work with a
 	// returned
 	// `Git.Repository` instance.
-	cloneRepository.catch(errorAndAttemptOpen).catch(errCb)
+	cloneRepository.catch(errorAndAttemptOpen)
 		.then(function (repository) {
 			console.log("Got Repository");
 			// Access any repository methods here.
@@ -161,7 +161,7 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 								.catch(errCb);
 						}).catch(errCb);
 				}).catch(errCb);
-		});
+		}).catch(errCb);
 }
 
 module.exports.commit = function (name) {
