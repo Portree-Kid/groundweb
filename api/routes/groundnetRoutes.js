@@ -5,6 +5,7 @@ const fileUpload = require('express-fileupload');
 var libxmljs = require('libxmljs');
 var nodegit = require("nodegit");
 
+
 const fs = require('fs');
 const path = require("path")
 // const sha1File = require('sha1-file')
@@ -13,6 +14,7 @@ const sha1Hash = require('js-sha1')
 
 var DB = require('../config/database');
 var git = require('../util/git.js');
+var github = require('../util/github.js');
 
 const terraSyncDir = 'public';
 
@@ -46,8 +48,8 @@ router.post('/upload', function(req, res) {
 		res.send(JSON.stringify({message:"No file provided"}));
 		return;
 	}
-	if (!req.files.groundnet) {
-		res.send(JSON.stringify({message:"No file provided"}));
+	if (!req.body.gpl) {
+		res.send(JSON.stringify({message:"Please agree to the GPL v2."}));
 		return;
 	}
 	if (!req.body.user_email) {
@@ -112,11 +114,28 @@ router.post('/upload', function(req, res) {
 				return;
 			}
 			var gitPath = path.resolve(path.join(terraSyncDir, "/main/"));
+
+			/**
+			 * Callback for all errors
+			 * @param {*} err 
+			 */
 			var errCb = function (err) {
 			    if (err) {
-			        console.error(err);
-			        git.removeBranch(gitPath, icao);
-			        res.send(JSON.stringify({message:"Error in GIT", err}, replaceErrors));
+						  console.error("*************************************");
+							console.error(err);
+							if( err.errorFunction == 'Branch.create' ){
+							  git.removeBranch(gitPath, icao);
+							}
+							try{
+								var payload = JSON.stringify({message:"Error in GIT", err}, replaceErrors)
+								res.send(payload);
+							}	
+							catch( err )
+							{
+								console.log(err);
+								res.send( JSON.stringify({message:"Error in Stringify", err}, replaceErrors)	);
+							}
+
 			    }};
 			var writecb = function () {
 				var currentpath = path.join(gitPath, "/Airports/");
@@ -138,9 +157,16 @@ router.post('/upload', function(req, res) {
 			}
 
 			var okCb = function (){
-				console.log(icao + " Imported Successfully");
-				res.write(JSON.stringify({message: "" + icao + " Imported Successfully"}));
-				res.end();
+
+				github.load(icao,  req.body.user_email)
+				.then((pullReqResult) => {
+					console.log(`statusCode: ${pullReqResult.statusCode}`)
+					//console.log(res)
+					console.log(icao + " Imported Successfully");
+					res.write(JSON.stringify({message: "" + icao + " Imported Successfully"}));
+					res.end();
+				})
+				.catch(errCb)	
 			}
 			git.clone2(gitPath, icao, req.body.user_email, writecb, errCb, okCb);			
 		  });

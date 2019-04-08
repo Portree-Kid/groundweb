@@ -83,6 +83,10 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 								}
 								)
 								.then(function (branch) {
+									console.log("Setting upstream " + branch);
+									return NodeGit.Branch.setUpstream(branch, name);
+								})
+								.then(function (branch) {
 									var refspec = "refs/heads/" + name + ":refs/heads/" + name;
 									console.log("Add RefSpec " + refspec + "   " + branch);
 									return NodeGit.Remote.addPush(repository, "origin", refspec);
@@ -110,8 +114,9 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 								.then(function (indexResult) {
 									index = indexResult;
 									addedPaths.forEach(element => {
-										index.addByPath(element).then((element)=>{index.write();console.log("Added : " + JSON.stringify(element));});
-										
+										index.addByPath(element).then(
+											(element)=>{index.write();console.log("Added : " + JSON.stringify(element));
+										});										
 									});
 //									var result = 
 //									index.addAll(addedPaths, 5, addCb);
@@ -123,7 +128,7 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 									return index.writeTree();
 								})
 								.then((oidResult) => {
-									oid = oidResult;
+									treeOid = oidResult;
 									return NodeGit.Reference.nameToId(repository, "HEAD");
 								})
 								.then(function (head) {
@@ -131,13 +136,14 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 									return repository.getCommit(head);
 								})
 								.then(function (parent) {
-									console.log("Oid " + oid);
+									console.log("Oid " + treeOid);
 									console.log("Parent Head Commit " + parent);
 
 									var author = NodeGit.Signature.now("--",
 										email);
 									console.log("Committing to refs/heads/" + name);
-									return repository.createCommit("refs/heads/" + name, author, committer, "New Groundnet for " + name, oid, [parent]);
+									return repository.createCommit("HEAD", author, committer, "New Groundnet for " + name, 
+									treeOid, [parent]);
 								})
 								.then(function (commitOid) {
 									console.log("Committed " + commitOid);
@@ -150,7 +156,7 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 								})
 								.then(function (remote) {
 									var refspec = "refs/heads/" + name + ":refs/heads/" + name;
-									console.log("Push " + refspec);
+									console.log("Pushing " + refspec);
 									return remote.push(
 										["+" + refspec],
 										myFetchOpts
@@ -223,7 +229,6 @@ module.exports.removeBranch = function (localPath, name) {
 		})
 		.then(function (reference) {
 			console.log("Removed Branch " + reference);
-
 		})
 		.catch((err) => {
 			console.log(err);

@@ -60,3 +60,8 @@ typings/
 # next.js build output
 .next
 /Airports/
+.settings/.jsdtscope
+.project
+.settings/org.eclipse.wst.jsdt.core.prefs
+.settings/org.eclipse.wst.jsdt.ui.superType.container
+.settings/org.eclipse.wst.jsdt.ui.superType.name
