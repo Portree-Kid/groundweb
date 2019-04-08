@@ -46,8 +46,8 @@ router.post('/upload', function(req, res) {
 		res.send(JSON.stringify({message:"No file provided"}));
 		return;
 	}
-	if (!req.files.groundnet) {
-		res.send(JSON.stringify({message:"No file provided"}));
+	if (!req.body.gpl) {
+		res.send(JSON.stringify({message:"Please agree to the GPL v2."}));
 		return;
 	}
 	if (!req.body.user_email) {
