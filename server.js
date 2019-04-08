@@ -11,6 +11,9 @@ var errorHandler = function(err, req, res, next) {
 
 bodyParser = require('body-parser');
 
+const dotenv = require('dotenv');
+dotenv.config();
+
 const mountRoutes = require('./api/routes');
 
 app.use(compression());
