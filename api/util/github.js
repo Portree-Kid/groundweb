@@ -7,6 +7,7 @@ module.exports.load =
     function (branch, email) {
         var dat = {
             title : branch, 
+            body : "Submitted by " + email,
             head: branch, 
             base : 'master'
         };

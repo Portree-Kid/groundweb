@@ -5,6 +5,7 @@ const fileUpload = require('express-fileupload');
 var libxmljs = require('libxmljs');
 var nodegit = require("nodegit");
 
+var lockFile = require('lockfile');
 
 const fs = require('fs');
 const path = require("path")
@@ -156,9 +157,9 @@ router.post('/upload', function(req, res) {
 				return paths;
 			}
 
-			var okCb = function (){
-
-				github.load(icao,  req.body.user_email)
+			var okCb = function (branchName){
+				console.log("Opening pull request for " + branchName);
+				github.load(branchName,  req.body.user_email)
 				.then((pullReqResult) => {
 					console.log(`statusCode: ${pullReqResult.statusCode}`)
 					//console.log(res)
@@ -168,7 +169,7 @@ router.post('/upload', function(req, res) {
 				})
 				.catch(errCb)	
 			}
-			git.clone2(gitPath, icao, req.body.user_email, writecb, errCb, okCb);			
+			git.workflow(gitPath, icao, req.body.user_email, writecb, errCb, okCb);			
 		  });
 	});
 });

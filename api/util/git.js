@@ -17,7 +17,7 @@ var committer = NodeGit.Signature.now("Groundweb",
 	"terrasync@github.com");
 
 
-module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, okCb) {
+module.exports.workflow = function (localPath, name, email, saveFunction, errCb, okCb) {
 	console.log("Cloning " + localPath);
 
 	// Using the `clone` method from the `Git.Clone` module, bring down the
@@ -60,6 +60,7 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 		return NodeGit.Repository.open(localPath);
 	};
 
+	var branchName;
 	// Once the repository has been cloned or opened, you can work with a
 	// returned
 	// `Git.Repository` instance.
@@ -79,29 +80,30 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 								.then(function (oid) {
 									console.log("Got Master " + oid);
 									// create the branch
-									return NodeGit.Branch.create(repository, name, oid, 0);
+									branchName = name + '_' + Date.now();
+									return NodeGit.Branch.create(repository, branchName, oid, 0);
 								}
 								)
 								.then(function (branch) {
-									console.log("Setting upstream " + branch);
-									return NodeGit.Branch.setUpstream(branch, name);
+									console.log("Setting upstream " + branchName);
+									return NodeGit.Branch.setUpstream(branch, branchName);
 								})
 								.then(function (branch) {
-									var refspec = "refs/heads/" + name + ":refs/heads/" + name;
-									console.log("Add RefSpec " + refspec + "   " + branch);
+									var refspec = "refs/heads/" + branchName + ":refs/heads/" + branchName;
+									console.log("Add RefSpec " + refspec + "   " + branchName);
 									return NodeGit.Remote.addPush(repository, "origin", refspec);
 								})
 								.then(function (reference) {
-									console.log("Checking out branch " + "refs/heads/" + name);
-									return repository.checkoutBranch("refs/heads/" + name, {});
+									console.log("Checking out branch " + "refs/heads/" + branchName);
+									return repository.checkoutBranch("refs/heads/" + branchName, {});
 								})
 								.then(function () {
 									return repository.getReferenceCommit(
-										"refs/heads/" + name);
+										"refs/heads/" + branchName);
 								})
 								.then(function (commit) {
-									console.log("Resetting to refs/heads/" + name + " "  + commit);
-									NodeGit.Reset.reset(repository, commit, 3, {});
+									console.log("Resetting to refs/heads/" + branchName + " "  + commit);
+									return NodeGit.Reset.reset(repository, commit, 3, {});
 								})
 								// Let the file be saved
 								.then(function () { return saveFunction(); })
@@ -141,7 +143,7 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 
 									var author = NodeGit.Signature.now("--",
 										email);
-									console.log("Committing to refs/heads/" + name);
+									console.log("Committing to refs/heads/" + branchName);
 									return repository.createCommit("HEAD", author, committer, "New Groundnet for " + name, 
 									treeOid, [parent]);
 								})
@@ -155,7 +157,7 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 									return NodeGit.Remote.lookup(repository, "origin");
 								})
 								.then(function (remote) {
-									var refspec = "refs/heads/" + name + ":refs/heads/" + name;
+									var refspec = "refs/heads/" + branchName + ":refs/heads/" + branchName;
 									console.log("Pushing " + refspec);
 									return remote.push(
 										["+" + refspec],
@@ -163,7 +165,10 @@ module.exports.clone2 = function (localPath, name, email, saveFunction, errCb, o
 										, committer, "Push to " + refspec
 									);
 								})
-								.then(okCb)
+								.then(function() { 
+									console.log(branchName);
+									okCb(branchName);
+								})
 								.catch(errCb);
 						}).catch(errCb);
 				}).catch(errCb);
