@@ -124,7 +124,7 @@ router.post('/upload', function(req, res) {
 						  console.error("*************************************");
 							console.error(err);
 							if( err.errorFunction == 'Branch.create' ){
-							  git.removeBranch(gitPath, icao);
+							  //git.removeBranch(gitPath, icao);
 							}
 							try{
 								var payload = JSON.stringify({message:"Error in GIT", err}, replaceErrors)
