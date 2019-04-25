@@ -232,6 +232,7 @@ function buildDirIndex(currentpath) {
 
 	fs.readdirSync(absolutePath, { withFileTypes: true })
 		.filter(file => file.name != ".dirindex")
+		.filter(file => file.name != ".git")
 		.forEach(file => {
 			if (file.isFile()) {
 				var sha1 = sha1Hash(fs.readFileSync(path.join(absolutePath, file.name)));
@@ -255,7 +256,9 @@ function buildDirIndex(currentpath) {
 							//					  console.log(sha1);
 						}
 					})
-				fs.writeSync(wstream, `d:${file.name}:${sha1}\n`);
+				if(sha1){
+					fs.writeSync(wstream, `d:${file.name}:${sha1}\n`);
+				}
 			}
 		})
 	fs.closeSync(wstream);
