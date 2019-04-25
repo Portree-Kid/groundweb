@@ -9,8 +9,8 @@ var credCallback = function (url, userName) {
 	return NodeGit.Cred.sshKeyFromAgent(userName);
 }
 
-var addCb = function( obj){
-   console.log("OBJ : " + JSON.stringify(obj));
+var addCb = function (obj) {
+	console.log("OBJ : " + JSON.stringify(obj));
 }
 
 var committer = NodeGit.Signature.now("Groundweb",
@@ -102,7 +102,7 @@ module.exports.workflow = function (localPath, name, email, saveFunction, errCb,
 										"refs/heads/" + branchName);
 								})
 								.then(function (commit) {
-									console.log("Resetting to refs/heads/" + branchName + " "  + commit);
+									console.log("Resetting to refs/heads/" + branchName + " " + commit);
 									return NodeGit.Reset.reset(repository, commit, 3, {});
 								})
 								// Let the file be saved
@@ -116,14 +116,14 @@ module.exports.workflow = function (localPath, name, email, saveFunction, errCb,
 								.then(function (indexResult) {
 									index = indexResult;
 									addedPaths.forEach(element => {
-										index.addByPath(element).then(
-											(element)=>{index.write();console.log("Added : " + JSON.stringify(element));
-										});										
+										await index.addByPath(element);
+										await index.write(); 
+										console.log("Added : " + JSON.stringify(element));
 									});
-//									var result = 
-//									index.addAll(addedPaths, 5, addCb);
+									//									var result = 
+									//									index.addAll(addedPaths, 5, addCb);
 									//.then((result)=>{console.log("Added All : " + JSON.stringify(result));}).catch(errCb);
-//									console.log("Added All : " + JSON.stringify(result));
+									//									console.log("Added All : " + JSON.stringify(result));
 									return index.write();
 								})
 								.then(function () {
@@ -141,11 +141,11 @@ module.exports.workflow = function (localPath, name, email, saveFunction, errCb,
 									console.log("Oid " + treeOid);
 									console.log("Parent Head Commit " + parent);
 
-									var author = NodeGit.Signature.now("--",
+									var author = NodeGit.Signature.now(email,
 										email);
 									console.log("Committing to refs/heads/" + branchName);
-									return repository.createCommit("HEAD", author, committer, "New Groundnet for " + name, 
-									treeOid, [parent]);
+									return repository.createCommit("HEAD", author, committer, "New Groundnet for " + name,
+										treeOid, [parent]);
 								})
 								.then(function (commitOid) {
 									console.log("Committed " + commitOid);
@@ -165,7 +165,7 @@ module.exports.workflow = function (localPath, name, email, saveFunction, errCb,
 										, committer, "Push to " + refspec
 									);
 								})
-								.then(function() { 
+								.then(function () {
 									console.log(branchName);
 									okCb(branchName);
 								})
