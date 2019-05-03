@@ -103,7 +103,7 @@ module.exports.workflow = function (localPath, name, email, saveFunction, errCb,
 								})
 								.then(function (commit) {
 									console.log("Resetting to refs/heads/" + branchName + " " + commit);
-									return NodeGit.Reset.reset(repository, commit, 3, {});
+									return NodeGit.Reset.reset(repository, commit, NodeGit.Reset.TYPE.HARD, {});
 								})
 								// Let the file be saved
 								.then(function () { return saveFunction(); })
@@ -115,10 +115,10 @@ module.exports.workflow = function (localPath, name, email, saveFunction, errCb,
 								})
 								.then(function (indexResult) {
 									index = indexResult;
-									addedPaths.forEach(element => {
+									addedPaths.forEach(async(element) => {
 										await index.addByPath(element);
 										await index.write(); 
-										console.log("Added : " + JSON.stringify(element));
+										console.log("Added : " + element);
 									});
 									//									var result = 
 									//									index.addAll(addedPaths, 5, addCb);
