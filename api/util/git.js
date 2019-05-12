@@ -64,113 +64,125 @@ module.exports.workflow = function (localPath, name, email, saveFunction, errCb,
 	// Once the repository has been cloned or opened, you can work with a
 	// returned
 	// `Git.Repository` instance.
+	var repository;
 	cloneRepository.catch(errorAndAttemptOpen)
-		.then(function (repository) {
+		.then(function (repo) {
 			console.log("Got Repository");
 			// Access any repository methods here.
-			repository.fetchAll(myFetchOpts)
-				.then(function () {
-					console.log("Fetched");
-					var mergeOptions = new NodeGit.MergeOptions();
-					repository.mergeBranches("master", "origin/master", NodeGit.Signature.default(repository), NodeGit.Merge.PREFERENCE.NONE, mergeOptions)
-						.then(function (oid) {
-							console.log("Merged " + oid);
-							var addedPaths;
-							repository.getBranchCommit("master")
-								.then(function (oid) {
-									console.log("Got Master " + oid);
-									// create the branch
-									branchName = name + '_' + Date.now();
-									return NodeGit.Branch.create(repository, branchName, oid, 0);
-								}
-								)
-								.then(function (branch) {
-									console.log("Setting upstream " + branchName);
-									return NodeGit.Branch.setUpstream(branch, branchName);
-								})
-								.then(function (branch) {
-									var refspec = "refs/heads/" + branchName + ":refs/heads/" + branchName;
-									console.log("Add RefSpec " + refspec + "   " + branchName);
-									return NodeGit.Remote.addPush(repository, "origin", refspec);
-								})
-								.then(function (reference) {
-									console.log("Checking out branch " + "refs/heads/" + branchName);
-									return repository.checkoutBranch("refs/heads/" + branchName, {});
-								})
-								.then(function () {
-									return repository.getReferenceCommit(
-										"refs/heads/" + branchName);
-								})
-								.then(function (commit) {
-									console.log("Resetting to refs/heads/" + branchName + " " + commit);
-									return NodeGit.Reset.reset(repository, commit, NodeGit.Reset.TYPE.HARD, {});
-								})
-								// Let the file be saved
-								.then(function () { return saveFunction(); })
-								.then(function (paths) {
-									console.log("Refreshing index " + paths);
-									addedPaths = paths.map(p => path.relative(localPath, p));
-									addedPaths = addedPaths.map(p => upath.toUnix(p));
-									return repository.index();
-								})
-								.then(function (indexResult) {
-									index = indexResult;
-									addedPaths.forEach(async(element) => {
-										await index.addByPath(element);
-										await index.write(); 
-										console.log("Added : " + element);
-									});
-									//									var result = 
-									//									index.addAll(addedPaths, 5, addCb);
-									//.then((result)=>{console.log("Added All : " + JSON.stringify(result));}).catch(errCb);
-									//									console.log("Added All : " + JSON.stringify(result));
-									return index.write();
-								})
-								.then(function () {
-									return index.writeTree();
-								})
-								.then((oidResult) => {
-									treeOid = oidResult;
-									return NodeGit.Reference.nameToId(repository, "HEAD");
-								})
-								.then(function (head) {
-									console.log("Got Head " + head);
-									return repository.getCommit(head);
-								})
-								.then(function (parent) {
-									console.log("Oid " + treeOid);
-									console.log("Parent Head Commit " + parent);
+			repository = repo;
+			return repo.fetchAll(myFetchOpts);
+		})
 
-									var author = NodeGit.Signature.now(email,
-										email);
-									console.log("Committing to refs/heads/" + branchName);
-									return repository.createCommit("HEAD", author, committer, "New Groundnet for " + name,
-										treeOid, [parent]);
-								})
-								.then(function (commitOid) {
-									console.log("Committed " + commitOid);
-									console.log("Switching back to master");
-									repository.checkoutBranch("master", {});
-									return repository;
-								})
-								.then(function () {
-									return NodeGit.Remote.lookup(repository, "origin");
-								})
-								.then(function (remote) {
-									var refspec = "refs/heads/" + branchName + ":refs/heads/" + branchName;
-									console.log("Pushing " + refspec);
-									return remote.push(
-										["+" + refspec],
-										myFetchOpts
-										, committer, "Push to " + refspec
-									);
-								})
-								.then(function () {
-									console.log(branchName);
-									okCb(branchName);
-								})
-								.catch(errCb);
-						}).catch(errCb);
+		.then(function (err) {
+			console.log("Fetched " + err);
+			var mergeOptions = new NodeGit.MergeOptions();
+			return repository.mergeBranches("master", "origin/master", NodeGit.Signature.default(repository), NodeGit.Merge.PREFERENCE.NONE, mergeOptions)
+				.then(function (oid) {
+					console.log("Merged " + oid);
+					var addedPaths;
+					repository.getBranchCommit("master")
+						.then(function (oid) {
+							console.log("Got Master " + oid);
+							// create the branch
+							branchName = name + '_' + Date.now();
+							return NodeGit.Branch.create(repository, branchName, oid, 0);
+						}
+						)
+						.then(function (branch) {
+							console.log("Setting upstream " + branchName);
+							return NodeGit.Branch.setUpstream(branch, branchName);
+						})
+						.then(function (branch) {
+							var refspec = "refs/heads/" + branchName + ":refs/heads/" + branchName;
+							console.log("Add RefSpec " + refspec + "   " + branchName);
+							return NodeGit.Remote.addPush(repository, "origin", refspec);
+						})
+						.then(function (reference) {
+							console.log("Checking out branch " + "refs/heads/" + branchName);
+							return repository.checkoutBranch("refs/heads/" + branchName, {});
+						})
+						.then(function () {
+							return repository.getReferenceCommit(
+								"refs/heads/" + branchName);
+						})
+						.then(function (commit) {
+							console.log("Resetting to refs/heads/" + branchName + " " + commit);
+							return NodeGit.Reset.reset(repository, commit, NodeGit.Reset.TYPE.HARD, {});
+						})
+						// Let the file be saved
+						.then(function () { return saveFunction(); })
+						.then(function (paths) {
+							console.log("Refreshing index " + paths);
+							addedPaths = paths.map(p => path.relative(localPath, p));
+							addedPaths = addedPaths.map(p => upath.toUnix(p));
+							return repository.index();
+						})
+						.then(function (indexResult) {
+							index = indexResult;
+							addedPaths.forEach((element) => {
+								console.debug("Added : " + element);
+								index.addByPath(element).then(function (result) {
+									if (result != 0) {
+										console.error("Result " + result);
+									}
+									return index.write()
+								}).then(function (result) {
+									if (result != 0) {
+										console.error("Result " + result);
+									}
+								}
+								);
+							})
+							return index.write();
+						})
+
+						.then(function (errCode) {
+							if (errCode != 0) {
+								console.error(errCode);
+							}
+							return index.writeTree();
+						})
+						.then((oidResult) => {
+							treeOid = oidResult;
+							return NodeGit.Reference.nameToId(repository, "HEAD");
+						})
+						.then(function (head) {
+							console.log("Got Head " + head);
+							return repository.getCommit(head);
+						})
+						.then(function (parent) {
+							console.log("Oid " + treeOid);
+							console.log("Parent Head Commit " + parent);
+
+							var author = NodeGit.Signature.now(email,
+								email);
+							console.log("Committing to refs/heads/" + branchName);
+							return repository.createCommit("HEAD", author, committer, "New Groundnet for " + name,
+								treeOid, [parent]);
+						})
+						.then(function (commitOid) {
+							console.log("Committed " + commitOid);
+							console.log("Switching back to master");
+							repository.checkoutBranch("master", {});
+							return repository;
+						})
+						.then(function () {
+							return NodeGit.Remote.lookup(repository, "origin");
+						})
+						.then(function (remote) {
+							var refspec = "refs/heads/" + branchName + ":refs/heads/" + branchName;
+							console.log("Pushing " + refspec);
+							return remote.push(
+								["+" + refspec],
+								myFetchOpts
+								, committer, "Push to " + refspec
+							);
+						})
+						.then(function () {
+							console.log(branchName);
+							okCb(branchName);
+						})
+						.catch(errCb);
 				}).catch(errCb);
 		}).catch(errCb);
 }
