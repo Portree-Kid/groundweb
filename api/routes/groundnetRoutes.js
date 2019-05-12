@@ -173,7 +173,8 @@ router.post('/upload', function (req, res) {
 					})
 					.catch(errCb)
 			}
-			lockFile.lock('groundweb.lock', function (er) {
+			var opts = {stale:60000};
+			lockFile.lock('groundweb.lock', opts, function (er) {
 				if (!er)
 					git.workflow(gitPath, icao, req.body.user_email, writecb, errCb, okCb);
 				else {
