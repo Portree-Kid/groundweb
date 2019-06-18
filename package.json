@@ -4,7 +4,8 @@
   "description": "Services to add groundnets for airports",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha",
+    "debug-test": "mocha --inspect-brk "
   },
   "repository": {
     "type": "git",
@@ -21,6 +22,10 @@
   },
   "homepage": "https://github.com/Portree-Kid/groundweb#readme",
   "devDependencies": {
+    "mocha": "^6.1.4",
+    "chai": "^4.2.0",
+    "sinon": "^7.3.2",
+    "extract-zip": "^1.6.7",
     "nodemon": "^1.18.10"
   },
   "dependencies": {
