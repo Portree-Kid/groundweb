@@ -1,5 +1,7 @@
 const util = require('util');
 const assert = require('assert');
+Coordinates = require('coordinate-parser');
+
 const Router = require('express-promise-router')
 const fileUpload = require('express-fileupload');
 var libxmljs = require('libxmljs');
@@ -173,7 +175,7 @@ router.post('/upload', function (req, res) {
 					})
 					.catch(errCb)
 			}
-			var opts = {stale:60000};
+			var opts = { stale: 60000 };
 			lockFile.lock('groundweb.lock', opts, function (er) {
 				if (!er)
 					git.workflow(gitPath, icao, req.body.user_email, writecb, errCb, okCb);
@@ -185,6 +187,111 @@ router.post('/upload', function (req, res) {
 		});
 	});
 });
+/**
+ * Service to accept a posted file.
+ * 
+ * @param req
+ * @param res
+ * @returns
+ */
+
+router.get('/:icao', function (req, res) {
+	res.setHeader('Content-Type', 'application/json');
+	if (!req.params.icao) {
+		res.send(JSON.stringify({ message: "No ICAO" }));
+		return;
+	}
+	var icaoRegex = '([0-9A-Z]{3,4})';
+	var result = req.params.icao.match(icaoRegex);
+	if (!result) {
+		res.send(JSON.stringify({ message: "ICAO wrong (Uppercase 3-4 chars)" }));
+		return;
+	}
+	console.log(req.params.icao);
+
+	var gitPath = path.resolve(path.join(terraSyncDir, "/main/"));
+	var currentpath = path.join(gitPath, "/Airports/");
+	currentpath = path.join(currentpath, req.params.icao[0]);
+	currentpath = path.join(currentpath, req.params.icao[1]);
+	currentpath = path.join(currentpath, req.params.icao[2]);
+	console.log(currentpath);
+	const groundnetData = fs.readFileSync(path.join(currentpath, req.params.icao + '.groundnet.xml'));
+	groundnetDoc = libxmljs.parseXml(groundnetData);
+	//
+	//{
+	//	"type": "MultiLineString",
+	//	"coordinates": [
+	//		[ [100.0, 0.0], [101.0, 1.0] ],
+	//		[ [102.0, 2.0], [103.0, 3.0] ]
+	//	]
+	// }
+	var segments = groundnetDoc.find('/groundnet/TaxiWaySegments/arc');
+	var lineString = {
+		type: "FeatureCollection",
+		"features": []
+	};
+	segments.forEach(function (segment) {
+
+		var feature = { "type": "Feature", "properties": {}, "geometry": { type: "MultiLineString", "coordinates": [] } };
+		var beginID = segment.attr('begin').value();
+		var beginNode = groundnetDoc.find("/groundnet/TaxiNodes/node[@index='" + beginID + "']");
+		if (beginNode.length == 0) {
+			beginNode = groundnetDoc.find("/groundnet/parkingList/Parking[@index='" + beginID + "']");
+		}
+		var endID = segment.attr('end').value();
+		var endNode = groundnetDoc.find("/groundnet/TaxiNodes/node[@index='" + endID + "']");
+		if (endNode.length == 0) {
+			endNode = groundnetDoc.find("/groundnet/parkingList/Parking[@index='" + endID + "']");
+		}
+		var beginCoords = new Coordinates(beginNode[0].attr('lat').value() + " " + beginNode[0].attr('lon').value());
+		var endCoords = new Coordinates(endNode[0].attr('lat').value() + " " + endNode[0].attr('lon').value());
+
+		feature.geometry.coordinates.push([[beginCoords.getLongitude(), beginCoords.getLatitude()], [endCoords.getLongitude(), endCoords.getLatitude()]]);
+		if (beginNode.isOnRunway) {
+			lineString.features.push({
+				"type": "Feature", "properties": {
+					"marker-color": "#ff0000",
+					"marker-size": "medium",
+					"marker-symbol": "circle"
+				}, "geometry": { "type": "Point", "coordinates": [beginCoords.getLongitude(), beginCoords.getLatitude()] }
+			});
+		}
+		else {
+			lineString.features.push({
+				"type": "Feature", "properties": {
+					"marker-color": "#0000ff",
+					"marker-size": "small",
+					"marker-symbol": "circle"
+				}, "geometry": { "type": "Point", "coordinates": [beginCoords.getLongitude(), beginCoords.getLatitude()] }
+			});
+		}
+		if (endNode.isOnRunway) {
+			lineString.features.push({
+				"type": "Feature", "properties": {
+					"marker-color": "#ff0000",
+					"marker-size": "medium",
+					"marker-symbol": "circle"
+				}, "geometry": { "type": "Point", "coordinates": [endCoords.getLongitude(), endCoords.getLatitude()] }
+			});
+		}
+		else {
+			lineString.features.push({
+				"type": "Feature", "properties": {
+					"marker-color": "#0000ff",
+					"marker-size": "small",
+					"marker-symbol": "circle"
+				}, "geometry": { "type": "Point", "coordinates": [endCoords.getLongitude(), endCoords.getLatitude()] }
+			});
+		}
+		lineString.features.push(feature);
+
+		console.log(segment + "" + beginNode);
+	});
+	fs.writeFileSync(path.join(currentpath, req.params.icao + '.groundnet.json'), JSON.stringify(lineString), { flag: 'w' });
+	res.send(JSON.stringify(lineString));
+	return;
+});
+
 console.log('Mounted groundnet routes');
 
 function createPath(currentpath, res) {
