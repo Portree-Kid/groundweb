@@ -16,7 +16,20 @@ const upstreamDir = 'public_upstream';
 var git = require('../api/util/git.js');
 var github = require('../api/util/github.js');
 
-describe('Array', function () {
+describe('Git', function () {
+
+
+  afterEach(function (done) {
+    var localPath = path.resolve(path.join(terraSyncDir, "/main/"));
+    var upstreamPath = path.resolve(path.join(upstreamDir, "/main/"));
+    console.log("Remove " + localPath);
+    if (!localPath) { fs.rmdirSync(localPath); }
+    console.log("Remove " + upstreamPath);
+    if (!upstreamPath) { fs.rmdirSync(upstreamPath); }
+    done();
+  });
+
+
   it('git test no diff', (done) => {
 
     var mock = sinon.mock(NodeGit);
@@ -48,25 +61,15 @@ describe('Array', function () {
         return paths;
       };
       var errCb = (err) => {
-        //      console.log(err);
-        //      assert.fail(err);
-        if (!localPath)
-          fs.rmdirSync(localPath);
-        if (!upstreamPath)
-          fs.rmdirSync(upstreamPath);
         done();
       };
       var okCb = () => {
-        if (!localPath)
-          fs.rmdirSync(localPath);
-        if (!upstreamPath)
-          fs.rmdirSync(upstreamPath);
         done("Shouldn't be OK");
       };
       var cloneURL;
       var stub = sandbox.replace(git, "push", function (remote, refspec, myFetchOpts, committer) {
         console.log("PUSH " + committer);
-        done("PUSCHED");
+        done("PUSHED but shouldn't");
       });
       git.workflow(localPath, 'EDDP', email, saveFunction, errCb, okCb, "file:///" + upstreamPath);
       //sandbox.assert.calledOnce(stub);
@@ -75,8 +78,7 @@ describe('Array', function () {
 
     //    createPath(gitPath);
   }).timeout(60000);
-});
-describe('Git test with diff', function () {
+
   it('git test with diff', (done) => {
 
     var mock = sinon.mock(NodeGit);
@@ -108,19 +110,10 @@ describe('Git test with diff', function () {
         return paths;
       };
       var errCb = (err) => {
-        //      console.log(err);
-        //      assert.fail(err);
-        if (!localPath)
-          fs.rmdirSync(localPath);
-        if (!upstreamPath)
-          fs.rmdirSync(upstreamPath);
         done(err);
       };
-      var okCb = () => {
-        if (!localPath)
-          fs.rmdirSync(localPath);
-        if (!upstreamPath)
-          fs.rmdirSync(upstreamPath);
+      var okCb = (branchname) => {
+        console.log("Ok called " + branchname);
         done();
       };
       var cloneURL;
@@ -134,11 +127,6 @@ describe('Git test with diff', function () {
     //    createPath(gitPath);
   }).timeout(60000);
 
-});
-describe('Git test with diff', function () {
-  it('git test with diff', (done) => {
-
-  })
 });
 
 

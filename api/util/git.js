@@ -144,12 +144,12 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 								addedPaths.forEach((element) => {
 									console.debug("Added : " + element);
 									index.addByPath(element).then(function (result) {
-										if (result != 0) {
+										if (result) {
 											console.error("Result " + result);
 										}
 										return index.write()
 									}).then(function (result) {
-										if (result != 0) {
+										if (result) {
 											console.error("Result " + result);
 										}
 									}
@@ -159,12 +159,12 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 							})
 
 							.then(function (errCode) {
-								if (errCode != 0) {
-									console.error(errCode);
+								if (errCode) {
+									console.error("Error " + errCode);
 								}
 								return index.writeTree();
 							})
-							.then((oidResult) => {
+							.then(function (oidResult) {
 								treeOid = oidResult;
 								return NodeGit.Reference.nameToId(repository, "HEAD");
 							})
@@ -183,15 +183,15 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 								console.log(patches.map((patch) => patch.newFile().path()));
 								return parent;
 							})
-							.then(function (parent) {
+							.then(async function (parent) {
 								console.log("Oid " + treeOid);
 								console.log("Parent Head Commit " + parent);
 
-								var author = NodeGit.Signature.now(email,
-									email);
-								console.log("Committing to refs/heads/" + branchName);
-								return repository.createCommit("HEAD", author, committer, "New Groundnet for " + icao,
-									treeOid, [parent]);
+								var tree = await parent.getTree();
+								var author = NodeGit.Signature.now(email, email);
+								console.log("Committing to refs/heads/" + branchName  + "\t" + tree );
+								
+								return repository.createCommit("HEAD", author, committer, "New Groundnet for " + icao, tree, [parent]);
 							})
 							.then(function (commitOid) {
 								console.log("Committed " + commitOid);
@@ -208,7 +208,7 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 								return exports.push(remote, refspec, myFetchOpts, committer);
 							})
 							.then(function () {
-								console.log(branchName);
+								console.log("Success " + branchName);
 								okCb(branchName);
 							})
 							.catch(errCb);
