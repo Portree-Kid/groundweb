@@ -22,11 +22,12 @@
   },
   "homepage": "https://github.com/Portree-Kid/groundweb#readme",
   "devDependencies": {
-    "mocha": "^6.1.4",
     "chai": "^4.2.0",
-    "sinon": "^7.3.2",
     "extract-zip": "^1.6.7",
-    "nodemon": "^1.18.10"
+    "mocha": "^6.1.4",
+    "node-mocks-http": "^1.7.6",
+    "nodemon": "^1.18.10",
+    "sinon": "^7.3.2"
   },
   "dependencies": {
     "axios": "^0.18.0",

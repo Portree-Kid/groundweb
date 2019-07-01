@@ -5,6 +5,7 @@ const fs = require('fs');
 var dirindex = require('../api/util/dirindex.js');
 const sinon = require('sinon');
 var sandbox = require('sinon').createSandbox();
+var mocks = require('node-mocks-http');
 
 var NodeGit = require("nodegit");
 
@@ -15,11 +16,21 @@ const upstreamDir = 'public_upstream';
 
 var git = require('../api/util/git.js');
 var github = require('../api/util/github.js');
+//var groundnetRoutes = require('../api/routes/groundnetRoutes.js');
+var GroundnetController = require('../api/routes/groundnetController.js');
 
 describe('Git', function () {
 
+  this.beforeEach(function (done) {
+    var stub = sandbox.replace(git, "push", function (remote, refspec, myFetchOpts, committer) {
+      console.log("PUSH " + committer);
+    });
 
-  afterEach(function (done) {
+    done();
+  });
+
+
+  this.afterEach(function (done) {
     var localPath = path.resolve(path.join(terraSyncDir, "/main/"));
     var upstreamPath = path.resolve(path.join(upstreamDir, "/main/"));
     console.log("Remove " + localPath);
@@ -27,6 +38,7 @@ describe('Git', function () {
     console.log("Remove " + upstreamPath);
     if (!upstreamPath) { fs.rmdirSync(upstreamPath); }
     done();
+    sandbox.restore();
   });
 
 
@@ -67,11 +79,8 @@ describe('Git', function () {
         done("Shouldn't be OK");
       };
       var cloneURL;
-      var stub = sandbox.replace(git, "push", function (remote, refspec, myFetchOpts, committer) {
-        console.log("PUSH " + committer);
-        done("PUSHED but shouldn't");
-      });
       git.workflow(localPath, 'EDDP', email, saveFunction, errCb, okCb, "file:///" + upstreamPath);
+
       //sandbox.assert.calledOnce(stub);
       sandbox.restore();
     })
@@ -114,19 +123,49 @@ describe('Git', function () {
       };
       var okCb = (branchname) => {
         console.log("Ok called " + branchname);
-        done();
+        checkLastCommit(localPath, "refs/heads/" + branchname).then(() => {  done(); }).catch((err) => {  done(err); });
       };
-      var cloneURL;
-      var stub = sandbox.replace(git, "push", function (remote, refspec, myFetchOpts, committer) {
-        console.log("PUSH " + committer);
-      });
       git.workflow(localPath, 'EDDP', email, saveFunction, errCb, okCb, "file:///" + upstreamPath);
+
       //sandbox.assert.calledOnce(stub);
 
     })
     //    createPath(gitPath);
   }).timeout(60000);
+});
 
+describe('Groundweb', function () {
+
+  it('git test no icao', (done) => {
+
+    req = mocks.createRequest();
+    res = mocks.createResponse();
+    GroundnetController.airportGeoJSON(req, res);
+    var data = res._getJSONData(); // short-hand for JSON.parse( res._getData() );
+
+    assert.equal(200, res.statusCode);
+    assert.isOk(res._isEndCalled());
+    assert.isOk(res._isJSON());
+    assert(data.message === 'No ICAO', 'Message must be No ICAO');
+    console.log(res.statusCode);
+    done();
+  })
+
+  it('git test with illegal xml', (done) => {
+
+    req = mocks.createRequest();
+    req.params.icao = "EDDP";
+    res = mocks.createResponse();
+    GroundnetController.airportGeoJSON(req, res);
+    var data = res._getJSONData(); // short-hand for JSON.parse( res._getData() );
+
+    assert.equal(200, res.statusCode);
+    assert.isOk(res._isEndCalled());
+    assert.isOk(res._isJSON());
+    //    assert(data.message === 'No ICAO', 'Message must be No ICAO');
+    console.log(res.statusCode);
+    done();
+  })
 });
 
 
@@ -137,4 +176,21 @@ function createPath(currentpath) {
     console.error('Error creating path', err);
     return;
   });
+}
+
+async function checkLastCommit(localPath, branchname) {
+  try {
+    var repo = await NodeGit.Repository.open(localPath);
+    console.log(repo);
+    var commit = await repo.getReferenceCommit(branchname);
+    var masterCommit = await repo.getReferenceCommit("master");
+    console.log(commit + ":" + masterCommit);
+    diff = await commit.getDiff();
+    var result = diff[0].numDeltas();
+    assert.isAbove(0, result, 'Expect more than one diff');
+    console.log(diff);
+    return new Promise.resolve();
+  } catch (error) {
+    return Promise.reject(error);
+  }
 }
