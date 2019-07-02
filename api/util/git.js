@@ -70,16 +70,12 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 				repository = repo;
 				return repo.fetchAll(myFetchOpts);
 			}).catch(errorAndAttemptOpen)
-			.then(function (repo) {
+			.then(async function (repository) {
 				console.log("Got Repository 2");
 				// Access any repository methods here.
-				repository = repo;
-				return repo.fetchAll(myFetchOpts);
-			})
-
-			.then(function (err) {
-				if (err) {
-					errCb(err);
+				var errFetch = await repository.fetchAll(myFetchOpts);
+				if (errFetch) {
+					errCb(errFetch);
 				}
 				console.log("Fetched ");
 				var mergeOptions = new NodeGit.MergeOptions();
@@ -94,54 +90,33 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 
 				console.log("Repostat " + result);
 
-
-				return repository.mergeBranches("master", "origin/master", defaultSignature, NodeGit.Merge.PREFERENCE.NONE, mergeOptions);
-			})
-			.then(function (oid) {
+				oid = await repository.mergeBranches("master", "origin/master", defaultSignature, NodeGit.Merge.PREFERENCE.NONE, mergeOptions);
 				console.log("Merged " + oid);
 				var addedPaths;
-				return repository.getBranchCommit("master");
-			})
-			.then(function (oid) {
+				oid = await repository.getBranchCommit("master");
 				console.log("Got Master " + oid);
 				// create the branch
 				branchName = icao + '_' + Date.now();
-				return NodeGit.Branch.create(repository, branchName, oid, 0);
-			}
-			)
-			.then(function (branch) {
+				branch = await NodeGit.Branch.create(repository, branchName, oid, 0);
 				console.log("Setting upstream " + branchName);
-				return NodeGit.Branch.setUpstream(branch, branchName);
-			})
-			.then(function (branch) {
+				var branch = await NodeGit.Branch.setUpstream(branch, branchName);
 				var refspec = "refs/heads/" + branchName + ":refs/heads/" + branchName;
 				console.log("Add RefSpec " + refspec + "   " + branchName);
-				return NodeGit.Remote.addPush(repository, "origin", refspec);
-			})
-			.then(function (reference) {
-				console.log("Checking out branch " + "refs/heads/" + branchName);
-				return repository.checkoutBranch("refs/heads/" + branchName, {});
-			})
-			.then(function () {
-				return repository.getReferenceCommit(
+				var reference = await NodeGit.Remote.addPush(repository, "origin", refspec);
+				console.log("Checking out branch " + refspec + "\t" + reference);
+				var checkoutBranch = await repository.checkoutBranch("refs/heads/" + branchName, {});
+				var commit = await repository.getReferenceCommit(
 					"refs/heads/" + branchName);
-			})
-			.then(function (commit) {
 				console.log("Resetting to refs/heads/" + branchName + " " + commit);
-				return NodeGit.Reset.reset(repository, commit, NodeGit.Reset.TYPE.HARD, {});
-			})
+				var resetResult =  NodeGit.Reset.reset(repository, commit, NodeGit.Reset.TYPE.HARD, {});
 			// Let the file be saved (Callback)
-			.then(function () { return saveFunction(); })
-			.then(function (paths) {
+			    var paths = await saveFunction();
 				if (!paths)
 					errCb("saveFunction() returns undefined");
 				console.log("Refreshing index " + paths);
 				addedPaths = paths.map(p => path.relative(localPath, p));
 				addedPaths = addedPaths.map(p => upath.toUnix(p));
-				return repository.index();
-			})
-			.then(function (indexResult) {
-				index = indexResult;
+				var index = await repository.index();
 				addedPaths.forEach((element) => {
 					console.debug("Added : " + element);
 					index.addByPath(element).then(function (result) {
@@ -156,54 +131,26 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 					}
 					);
 				})
-				return index.write();
-			})
-
-			.then(function (errCode) {
+				var errCode = await index.write();
 				if (errCode) {
 					console.error("Error " + errCode);
 				}
-				return index.writeTree();
-			})
-			.then(function (oidResult) {
-				treeOid = oidResult;
-				return NodeGit.Reference.nameToId(repository, "HEAD");
-			})
-			.then(function (head) {
+				var treeOid = await index.writeTree();
+				var head = await NodeGit.Reference.nameToId(repository, "HEAD");
 				console.log("Got Head " + head);
-				return repository.getCommit(head);
-			})
-			.then(async function (parent) {
-				const diff = await NodeGit.Diff.treeToIndex(repository, await parent.getTree(), null);
-				const patches = await diff.patches();
-				if (patches.length < 5) {
-					var err = new Error("No difference detected. Is the file different? ");
-					//errCb(err);
-					throw err;
-				}
-				console.log(patches.map((patch) => patch.newFile().path()));
-				return parent;
-			})
-			.then(async function (parent) {
+				var parent = await repository.getCommit(head);
+				var parentTree = await parent.getTree();
 				console.log("Oid " + treeOid);
 				console.log("Parent Head Commit " + parent);
 
-				var tree = await parent.getTree();
 				var author = NodeGit.Signature.now(email, email);
-				console.log("Committing to refs/heads/" + branchName + "\t" + tree);
+				console.log("Committing to refs/heads/" + branchName + "\t" + treeOid);
 
-				return repository.createCommit("HEAD", author, committer, "New Groundnet for " + icao, tree, [parent]);
-			})
-			.then(function (commitOid) {
+				var commitOid = await repository.createCommit("HEAD", author, committer, "New Groundnet for " + icao, treeOid, [parent]);
 				console.log("Committed " + commitOid);
 				console.log("Switching back to master");
 				repository.checkoutBranch("master", {});
-				return repository;
-			})
-			.then(function () {
-				return NodeGit.Remote.lookup(repository, "origin");
-			})
-			.then(function (remote) {
+				var remote = await NodeGit.Remote.lookup(repository, "origin");
 				var refspec = "refs/heads/" + branchName + ":refs/heads/" + branchName;
 				console.log("Pushing " + refspec);
 				return exports.push(remote, refspec, myFetchOpts, committer);
