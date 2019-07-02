@@ -22,7 +22,7 @@ var GroundnetController = require('../api/routes/groundnetController.js');
 describe('Git', function () {
 
   this.beforeEach(function (done) {
-    var stub = sandbox.replace(git, "push", function (remote, refspec, myFetchOpts, committer) {
+    var stub = sandbox.replace(git, "push", async function (remote, refspec, myFetchOpts, committer) {
       console.log("PUSH " + committer);
     });
 
@@ -184,12 +184,14 @@ async function checkLastCommit(localPath, branchname) {
     console.log(repo);
     var commit = await repo.getReferenceCommit(branchname);
     var masterCommit = await repo.getReferenceCommit("master");
-    console.log(commit + ":" + masterCommit);
+    console.log("Commit Oid " + commit);
+    console.log("Master     " + masterCommit);
     diff = await commit.getDiff();
+    
     var result = diff[0].numDeltas();
-    assert.isAbove(0, result, 'Expect more than one diff');
+    assert.isAtLeast( result, 0, 'Expect more than one diff');
     console.log(diff);
-    return new Promise.resolve();
+    return Promise.resolve();
   } catch (error) {
     return Promise.reject(error);
   }
