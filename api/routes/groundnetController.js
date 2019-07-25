@@ -17,8 +17,9 @@ Coordinates = require('coordinate-parser');
 
 const schema = fs.readFileSync('schema/groundnet.xsd');
 
+module.exports = {
 
-module.exports.upload = function (req, res) {
+upload (req, res) {
 	res.setHeader('Content-Type', 'application/json');
 	if (!req.files) {
 		res.send(JSON.stringify({ message: "No file provided" }));
@@ -39,8 +40,8 @@ module.exports.upload = function (req, res) {
 	var user;
 	DB.getUserByEmail(req.body.user_email, function (err, user) {
 		if (err) {
-			res.send(JSON.stringify({ message: "Error getting user", err }, replaceErrors));
-			return;
+			//res.send(JSON.stringify({ message: "Error getting user", err }, replaceErrors));
+			//return;
 		}
 		//TODO User Check in Production
 		//		if(!user) {
@@ -84,14 +85,14 @@ module.exports.upload = function (req, res) {
 		var icao = result[1];
 		DB.GetAirportByIcao(icao, function (err, airport) {
 			if (err) {
-				console.error('Error executing query', err);
-				res.sendStatus(500);
-				return;
+				//console.error('Error executing query', err);
+				//res.sendStatus(500);
+				//return;
 			}
 			console.log("Result Airportdata : " + airport);
-			if (!airport) {
-				res.send(JSON.stringify({ message: "Airport doesn't exist" }));
-				return;
+			if (!airport) {				
+				//res.send(JSON.stringify({ message: "Airport doesn't exist" }));
+				//return;
 			}
 			var gitPath = path.resolve(path.join(terraSyncDir, "/main/"));
 
@@ -163,9 +164,9 @@ module.exports.upload = function (req, res) {
 			});
 		});
 	});
-};
+},
 
-module.exports.airportGeoJSON = function (req, res) {
+airportGeoJSON (req, res) {
 	res.setHeader('Content-Type', 'application/json');
 	if (!req.params.icao) {
 		res.send(JSON.stringify({ message: "No ICAO" }));
@@ -260,6 +261,7 @@ module.exports.airportGeoJSON = function (req, res) {
 	fs.writeFileSync(path.join(currentpath, req.params.icao + '.groundnet.json'), JSON.stringify(lineString), { flag: 'w' });
 	res.send(JSON.stringify(lineString));
 	return;
+  }
 }
 
 function createPath(currentpath, res) {
@@ -270,4 +272,28 @@ function createPath(currentpath, res) {
 		res.sendStatus(500);
 		return;
 	});
+}
+
+/**
+ * Error objects are not correctly processed by stringify
+ * 
+ * @param key
+ * @param value
+ * @returns
+ */
+function replaceErrors(key, value) {
+	if (key === 'stack') { // 
+		return undefined; // remove from result
+	}
+	if (value instanceof Error) {
+		var error = {};
+
+		Object.getOwnPropertyNames(value).forEach(function (key) {
+			error[key] = value[key];
+		});
+
+		return error;
+	}
+
+	return value;
 }

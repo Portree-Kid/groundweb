@@ -4,7 +4,7 @@ const assert = require('assert');
 const Router = require('express-promise-router')
 const fileUpload = require('express-fileupload');
 const fs = require('fs');
-var GroundnetController = require('groundnetController.js');
+const GroundnetController = require('./groundnetController');
 
 
 // create a new express-promise-router
@@ -24,8 +24,7 @@ module.exports = router;
  * @param res
  * @returns
  */
-
-router.post('/upload', GroundnetController.exports.upload);
+router.post('/upload', GroundnetController.upload);
 /**
  * Service to accept a posted file.
  * 
@@ -34,7 +33,7 @@ router.post('/upload', GroundnetController.exports.upload);
  * @returns
  */
 
-router.get('/:icao', GroundnetController.exports.airportGeoJSON);
+router.get('/:icao', GroundnetController.airportGeoJSON);
 
 console.log('Mounted groundnet routes');
 
