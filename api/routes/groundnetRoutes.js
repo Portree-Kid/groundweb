@@ -39,26 +39,3 @@ console.log('Mounted groundnet routes');
 
 
 
-/**
- * Error objects are not correctly processed by stringify
- * 
- * @param key
- * @param value
- * @returns
- */
-function replaceErrors(key, value) {
-	if (key === 'stack') { // 
-		return undefined; // remove from result
-	}
-	if (value instanceof Error) {
-		var error = {};
-
-		Object.getOwnPropertyNames(value).forEach(function (key) {
-			error[key] = value[key];
-		});
-
-		return error;
-	}
-
-	return value;
-}
