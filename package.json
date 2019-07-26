@@ -47,7 +47,6 @@
     "libxmljs": "^0.19.5",
     "lockfile": "^1.0.4",
     "nodegit": "^0.24.1",
-    "nodemo": "^1.0.0",
     "path": "^0.12.7",
     "pg": "^7.8.1",
     "serve-index": "^1.9.1",
