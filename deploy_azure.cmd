@@ -100,7 +100,7 @@ call :SelectNodeVersion
 :: 3. Install npm packages
 IF EXIST "%DEPLOYMENT_TARGET%\package.json" (
   pushd "%DEPLOYMENT_TARGET%"
-  del /s node_modules
+  del /s /q node_modules
   call :ExecuteCmd !NPM_CMD! install --scripts-prepend-node-path
   IF !ERRORLEVEL! NEQ 0 goto error
   popd
