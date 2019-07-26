@@ -29,8 +29,12 @@ mountRoutes(app);
 app.use(express.static('public', {'hidden' :true}), serveIndex('public', {'icons': false, 'hidden' :true}, styleSheet='page.css'));
 
 
+try {
 // app.use(notFound); // your page not found interceptor
 app.use(errorHandler);
 app.listen(port);
 
-console.log('flightgear airports xml  RESTful API server started on: ' + port);
+console.log('flightgear airports xml  RESTful API server started on: ' + port);	
+} catch (error) {
+  console.error(error);	
+}
