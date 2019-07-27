@@ -4,8 +4,10 @@ var upath = require("upath");
 
 
 var credCallback = function (url, userName) {
-	console.log("CredCb User : " + userName + " Url : " + url);
-	return NodeGit.Cred.sshKeyFromAgent(userName);
+	console.log("CredCb User (sshKeyNew) : " + userName + " Url : " + url);
+//  
+    return NodeGit.Cred.sshKeyNew(userName, '%HOME%\.ssh\id_rsa.pub', '%HOME%\.ssh\id_rsa.pub');
+//	return NodeGit.Cred.sshKeyFromAgent(userName);
 }
 
 var addCb = function (obj) {
