@@ -1,13 +1,18 @@
 var NodeGit = require("nodegit");
 var path = require("path");
 var upath = require("upath");
+const homedir = require('os').homedir();
 
 
 var credCallback = function (url, userName) {
 	console.log("CredCb User (sshKeyNew) : " + userName + " Url : " + url);
 //  
     try {
-		return NodeGit.Cred.sshKeyNew(userName, '%HOME%\.ssh\id_rsa.pub', '%HOME%\.ssh\id_rsa', '');		
+		var pubfile = path.join(homedir, '.ssh', 'id_rsa.pub');
+		var privfile = path.join(homedir, '.ssh', 'id_rsa.pub');
+		console.log(pubfile);
+		console.log(privfile);
+		return NodeGit.Cred.sshKeyNew(userName, pubfile, privfile, '');		
 	} catch (error) {
 		console.error(error);
 	}
