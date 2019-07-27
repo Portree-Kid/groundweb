@@ -7,7 +7,7 @@ var credCallback = function (url, userName) {
 	console.log("CredCb User (sshKeyNew) : " + userName + " Url : " + url);
 //  
     try {
-		return NodeGit.Cred.sshKeyNew(userName, '%HOME%\.ssh\id_rsa.pub', '%HOME%\.ssh\id_rsa.pub');		
+		return NodeGit.Cred.sshKeyNew(userName, '%HOME%\.ssh\id_rsa.pub', '%HOME%\.ssh\id_rsa.pub', '');		
 	} catch (error) {
 		console.error(error);
 	}
