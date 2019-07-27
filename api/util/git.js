@@ -54,7 +54,7 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 		// simply
 		// open the repository in this case to continue execution.
 		var errorAndAttemptOpen = function (err) {
-			console.log("Open failed with " + err);
+			console.log("Clone failed with " + err);
 			console.log("Attempting to open ");
 			return NodeGit.Repository.open(localPath);
 		};
