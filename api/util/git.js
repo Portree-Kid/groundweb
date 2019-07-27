@@ -8,8 +8,8 @@ var credCallback = function (url, userName) {
 	console.log("CredCb User (sshKeyNew) : " + userName + " Url : " + url);
 //  
     try {
-		var pubfile = path.join(homedir, '.ssh', 'id_rsa.pub');
-		var privfile = path.join(homedir, '.ssh', 'id_rsa.pub');
+		var pubfile = path.join(process.env.HOME, '.ssh', 'id_rsa.pub');
+		var privfile = path.join(process.env.HOME, '.ssh', 'id_rsa.pub');
 		console.log(pubfile);
 		console.log(privfile);
 		return NodeGit.Cred.sshKeyNew(userName, pubfile, privfile, '');		
