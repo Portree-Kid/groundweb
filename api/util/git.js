@@ -4,7 +4,7 @@ var upath = require("upath");
 
 
 var credCallback = function (url, userName) {
-	console.log("User : " + userName + " Url : " + url);
+	console.log("CredCb User : " + userName + " Url : " + url);
 	return NodeGit.Cred.sshKeyFromAgent(userName);
 }
 
