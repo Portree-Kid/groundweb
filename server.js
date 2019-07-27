@@ -31,7 +31,5 @@ app.use(express.static('public', {'hidden' :true}), serveIndex('public', {'icons
 
 // app.use(notFound); // your page not found interceptor
 app.use(errorHandler);
-app.listen(port,
-function() {
-	console.log('flightgear airports xml  RESTful API server started on: ' + port);	
-  });
+app.listen(port);
+console.log('flightgear airports xml  RESTful API server started on: ' + port);	
