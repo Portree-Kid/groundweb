@@ -22,6 +22,18 @@ var credCallback = function (url, userName) {
 //	return NodeGit.Cred.sshKeyFromAgent(userName);
 }
 
+var credCallbackOauth = function (url, userName) {
+	console.log("CredCb User (userpassPlaintextNew) : " + userName + " Url : " + url);
+//  
+    try {
+			return nodegit.Cred.userpassPlaintextNew(process.env.API_KEY, "x-oauth-basic");
+	} catch (error) {
+		console.error(error);
+		return Cred.defaultNew();
+	}
+//	return NodeGit.Cred.sshKeyFromAgent(userName);
+}
+
 var addCb = function (obj) {
 	console.log("OBJ : " + JSON.stringify(obj));
 }
@@ -41,7 +53,7 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 		var myFetchOpts = {
 			callbacks: {
 				certificateCheck: function () { return 0; },
-				credentials: credCallback,
+				credentials: credCallbackOauth,
 				transferProgress: function (stats) {
 					try {
 						const progress = (100 * (stats.receivedObjects() + stats.indexedObjects())) / (stats.totalObjects() * 2);

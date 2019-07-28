@@ -155,8 +155,11 @@ upload (req, res) {
 			}
 			var opts = { stale: 60000 };
 			lockFile.lock('groundweb.lock', opts, function (er) {
-				if (!er)
-					git.workflow(gitPath, icao, req.body.user_email, writecb, errCb, okCb, 'git@github.com:terrasync/main.git');
+				if (!er){
+					//https://github.com/terrasync/main.git
+					//'git@github.com:terrasync/main.git'
+					git.workflow(gitPath, icao, req.body.user_email, writecb, errCb, okCb,'https://github.com/terrasync/main.git' );
+				}
 				else {
 					res.write(JSON.stringify({ message: "Import running try again shortly" }));
 					res.end();
