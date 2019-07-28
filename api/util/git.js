@@ -26,7 +26,7 @@ var credCallbackOauth = function (url, userName) {
 	console.log("CredCb User (userpassPlaintextNew) : " + userName + " Url : " + url);
 //  
     try {
-			return nodegit.Cred.userpassPlaintextNew(process.env.API_KEY, "x-oauth-basic");
+			return NodeGit.Cred.userpassPlaintextNew(process.env.API_KEY, "x-oauth-basic");
 	} catch (error) {
 		console.error(error);
 		return Cred.defaultNew();
