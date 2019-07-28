@@ -12,9 +12,12 @@ var credCallback = function (url, userName) {
 		var privfile = path.join(process.env.HOME, '.ssh', 'id_rsa.pub');
 		console.log(pubfile);
 		console.log(privfile);
-		return NodeGit.Cred.sshKeyNew(userName, pubfile, privfile, '');		
+		var cred = NodeGit.Cred.sshKeyNew(userName, pubfile, privfile, '');
+		console.log(JSON.stringify(cred));
+		return cred;		
 	} catch (error) {
 		console.error(error);
+		return Cred.defaultNew();
 	}
 //	return NodeGit.Cred.sshKeyFromAgent(userName);
 }
