@@ -5,7 +5,7 @@ REST API for the submission of flightgear airport data (groundnets ...)
 
 ## Submission of groundnets
 
-Groundnets can be submitted via HTTP POST to the URL [http://localhost:3000/groundnets/upload]. The file has to be added as parameter ``groundnet```. 
+Groundnets can be submitted via HTTP POST to the URL [http://groundweb.azurewebsites.net/groundnets/upload]. The file has to be added as parameter ``groundnet```. 
  The file is checked against a series of checks. 
 1. Parsable XML
 2. [XSD](https://raw.githubusercontent.com/Portree-Kid/groundweb/master/schema/groundnet.xsd) check 
@@ -13,5 +13,5 @@ Groundnets can be submitted via HTTP POST to the URL [http://localhost:3000/grou
 4. [TODO] Existence of runways
 5. [TODO] Uniqueness of parking spots
 4. Save File
-5. SHA1 file
+5. SHA1 file and directories
  
