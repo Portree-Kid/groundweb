@@ -8,7 +8,7 @@ height: 100px;
 
 </style>
 
-<form method="post" enctype="multipart/form-data" action="groundnets/upload" target="result">
+<form id="request_form" method="post" enctype="multipart/form-data" action="groundnets/upload" target="result" onsubmit="myButton.disabled = true;">
   <label>Email (not checked but used for commit) </label> 
   <input name="user_email" type="text"/>  <BR>
   <label>I agree to release my content under the GPL v2 </label> <input name="gpl" type="checkbox"/>    
@@ -16,9 +16,9 @@ height: 100px;
   <label>Your groundnet
     <input name="groundnet" type="file" size="50" accept="text/*"> 
   </label>  
-  <button>Upload</button>
+  <button name="myButton">Upload</button>
 </form>
 <a href="/main/Airports/">Uploaded content &#40; TerraSync compatible &#41;</a><br>
-<iframe name="result"></iframe>
+<iframe name="result" onLoad="document.getElementById('request_form').myButton.disabled = false;"></iframe>
 
 </html>
