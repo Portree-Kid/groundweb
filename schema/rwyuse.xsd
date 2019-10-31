@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+          <!-- XML Schema Generated from XML Document on Sun Oct 27 2019 08:59:39 GMT+0100 (Mitteleuropäische Normalzeit) -->
+          <!-- with XmlGrid.net Free Online Service http://xmlgrid.net -->
+       <xs:element name="rwyuse">
+              <xs:complexType>
+                     <xs:sequence>
+                            <xs:element name="com" maxOccurs="unbounded">
+                                   <xs:complexType>
+                                          <xs:sequence>
+                                                 <xs:element name="wind">
+                                                        <xs:complexType>
+                                                               <xs:attribute name="tail" type="xs:int"></xs:attribute>
+                                                               <xs:attribute name="cross" type="xs:int"></xs:attribute>
+                                                           </xs:complexType>
+                                                    </xs:element>
+                                                 <xs:element name="time">
+                                                        <xs:complexType>
+                                                               <xs:attribute name="start" type="xs:string"></xs:attribute>
+                                                               <xs:attribute name="end" type="xs:string"></xs:attribute>
+                                                               <xs:attribute name="schedule" type="xs:string"></xs:attribute>
+                                                           </xs:complexType>
+                                                    </xs:element>
+                                             </xs:sequence>
+                                      </xs:complexType>
+                               </xs:element>
+                            <xs:element name="gen" maxOccurs="unbounded">
+                                   <xs:complexType>
+                                          <xs:sequence>
+                                                 <xs:element name="wind">
+                                                        <xs:complexType>
+                                                               <xs:attribute name="tail" type="xs:int"></xs:attribute>
+                                                               <xs:attribute name="cross" type="xs:int"></xs:attribute>
+                                                           </xs:complexType>
+                                                    </xs:element>
+                                                 <xs:element name="time">
+                                                        <xs:complexType>
+                                                               <xs:attribute name="start" type="xs:string"></xs:attribute>
+                                                               <xs:attribute name="end" type="xs:string"></xs:attribute>
+                                                               <xs:attribute name="schedule" type="xs:string"></xs:attribute>
+                                                           </xs:complexType>
+                                                    </xs:element>
+                                             </xs:sequence>
+                                      </xs:complexType>
+                               </xs:element>
+                            <xs:element name="schedule" maxOccurs="unbounded">
+                                   <xs:complexType>
+                                          <xs:sequence>
+                                                 <xs:element name="takeoff" type="xs:string"></xs:element>
+                                                 <xs:element name="landing" type="xs:string"></xs:element>
+                                             </xs:sequence>
+                                          <xs:attribute name="name" type="xs:string"></xs:attribute>
+                                      </xs:complexType>
+                               </xs:element>
+                        </xs:sequence>
+                 </xs:complexType>
+          </xs:element>
+   </xs:schema>

@@ -15,7 +15,6 @@ Coordinates = require('coordinate-parser');
 
 
 
-const schema = fs.readFileSync('schema/groundnet.xsd');
 
 module.exports = {
 
@@ -49,6 +48,16 @@ upload (req, res) {
 		//			return;			
 		//		}
 		//		console.log(user);
+
+		//Check Filename
+		var groundnetRegex = '([0-9A-Z]{3,4})\\.(groundnet|ils|threshold|twr|rwyuse)\\.xml';
+		var result = req.files.groundnet.name.match(groundnetRegex);
+		if (!result) {
+			res.send(JSON.stringify({ message: "Filename doesn't match known filename pattern" }, replaceErrors));
+			return;
+		}
+		const type = result[2];
+		const schema = fs.readFileSync(`schema/${type}.xsd`);
 		var sitemapDoc;
 		var schemaDoc;
 		// Parse the sitemap and schema
@@ -59,14 +68,6 @@ upload (req, res) {
 			res.send(JSON.stringify({ message: "XML Errors", e }, replaceErrors));
 			return;
 		}
-
-		//Check Filename
-		var groundnetRegex = '([0-9A-Z]{3,4})\\.groundnet\\.xml';
-		var result = req.files.groundnet.name.match(groundnetRegex);
-		if (!result) {
-			res.send(JSON.stringify({ message: "Filename doesn't match ([0-9A-Z]{3,4})\\.groundnet\\.xml" }, replaceErrors));
-			return;
-		}
 		// Perform XML validation
 		const isValid = sitemapDoc.validate(schemaDoc);
 		if (!isValid) {
@@ -74,13 +75,18 @@ upload (req, res) {
 			res.send(JSON.stringify({ message: "XML Errors", validationErrors }, replaceErrors));
 			return;
 		}
-		var gates = sitemapDoc.find('/groundnet/parkingList/Parking[@type="gate"]');
-		console.log(gates);
-		console.log(gates.length);
-		if (gates.length == 0) {
-			res.send(JSON.stringify({ message: "No gates, traffic won't work" }, replaceErrors));
-			return;
+		switch (type) {
+			case 'groundnet':
+				var gates = sitemapDoc.find('/groundnet/parkingList/Parking[@type="gate"]');
+				if (gates.length == 0) {
+					res.send(JSON.stringify({ message: "No gates, traffic won't work" }, replaceErrors));
+					return;
+				}
+				break;		
+			default:
+				break;
 		}
+
 		//Does Airport exist?
 		var icao = result[1];
 		DB.GetAirportByIcao(icao, function (err, airport) {
@@ -147,8 +153,7 @@ upload (req, res) {
 						//console.log(res)
 						console.log(icao + " Imported Successfully");
 						lockFile.unlock('groundweb.lock', function (er) {
-							res.write(JSON.stringify({ message: "" + icao + " Imported Successfully" }));
-							res.end();
+							res.send(JSON.stringify({ message: "" + icao + " Imported Successfully" }));
 						})
 					})
 					.catch(errCb)
@@ -161,8 +166,7 @@ upload (req, res) {
 					git.workflow(gitPath, icao, req.body.user_email, writecb, errCb, okCb,'https://github.com/terrasync/main.git' );
 				}
 				else {
-					res.write(JSON.stringify({ message: "Import running try again shortly" }));
-					res.end();
+					res.send(JSON.stringify({ message: "Import running try again shortly" }));
 				}
 			});
 		});

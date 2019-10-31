@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+   <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+         <!-- XML Schema Generated from XML Document on Tue Oct 29 2019 23:07:47 GMT+0100 (Mitteleuropäische Normalzeit) -->
+         <!-- with XmlGrid.net Free Online Service http://xmlgrid.net -->
+         <xs:element name="PropertyList">
+               <xs:complexType>
+                     <xs:sequence>
+                           <xs:element name="runway" maxOccurs="unbounded">
+                                 <xs:complexType>
+                                       <xs:sequence>
+                                             <xs:element name="ils" maxOccurs="unbounded">
+                                                   <xs:complexType>
+                                                         <xs:sequence>
+                                                               <xs:element name="lon" type="xs:double"></xs:element>
+                                                               <xs:element name="lat" type="xs:double"></xs:element>
+                                                               <xs:element name="rwy" type="xs:string"></xs:element>
+                                                               <xs:element name="hdg-deg" type="xs:double"></xs:element>
+                                                               <xs:element name="elev-m" type="xs:double"></xs:element>
+                                                               <xs:element name="nav-id" type="xs:string"></xs:element>
+                                                         </xs:sequence>
+                                                   </xs:complexType>
+                                             </xs:element>
+                                       </xs:sequence>
+                                 </xs:complexType>
+                           </xs:element>
+                     </xs:sequence>
+               </xs:complexType>
+         </xs:element>
+   </xs:schema>

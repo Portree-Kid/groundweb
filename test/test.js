@@ -1,4 +1,3 @@
-var chai = require('chai');
 var assert = require('chai').assert;
 const path = require("path");
 const fs = require('fs');
@@ -8,7 +7,6 @@ var sandbox = require('sinon').createSandbox();
 var mocks = require('node-mocks-http');
 
 var NodeGit = require("nodegit");
-
 
 const terraSyncDir = 'public_test';
 const upstreamDir = 'public_upstream';
@@ -42,7 +40,7 @@ describe('Git', function () {
   });
 
 
-  it('git test no diff', (done) => {
+  it('git test groundweb no diff', (done) => {
 
     var mock = sinon.mock(NodeGit);
 
@@ -134,7 +132,29 @@ describe('Git', function () {
   }).timeout(60000);
 });
 
+
 describe('Groundweb', function () {
+  this.timeout(30000);
+
+  this.beforeEach(function (done) {    
+    var stub = sandbox.replace(git, "workflow", function (localPath, icao, email, saveFunction, errCb, okCb, cloneURL) {
+      console.log("Workflow  " + localPath);
+      okCb();
+    });
+
+    var githubLoad = sandbox.replace( github, 'load', function (branch, email) { return new Promise(function(resolve, reject) { 
+      resolve({statusCode: 200});
+    });
+  })
+
+    done();
+  });
+
+
+  this.afterEach(function (done) {
+    done();
+    sandbox.restore();
+  });
 
   it('git test no icao', (done) => {
 
@@ -155,16 +175,116 @@ describe('Groundweb', function () {
 
     req = mocks.createRequest();
     req.params.icao = "EDDP";
+    req.files.groundnet = {name: 'EDDP.groundnet.xml', data: 'BB'};
+    req.body = {gpl: true, user_email: 'user@example.org' }; 
     res = mocks.createResponse();
-    GroundnetController.airportGeoJSON(req, res);
-    var data = res._getJSONData(); // short-hand for JSON.parse( res._getData() );
 
-    assert.equal(200, res.statusCode);
-    assert.isOk(res._isEndCalled());
-    assert.isOk(res._isJSON());
-    //    assert(data.message === 'No ICAO', 'Message must be No ICAO');
-    console.log(res.statusCode);
-    done();
+    res.send = function (params) {
+      var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
+
+      assert.equal(200, res.statusCode);
+      assert(data.message === 'XML Errors', 'Message must be XML Errors');
+      console.log(res.statusCode);
+      done();
+    }
+    GroundnetController.upload(req, res);
+  })
+
+  it('git test with legal groundnet xml', (done) => {    
+    setTimeout(done, 30000);
+    req = mocks.createRequest();
+    req.params.icao = "EDDP";
+    const schema = fs.readFileSync('test/EDDP.groundnet.xml');
+    req.files.groundnet = {name: 'EDDP.groundnet.xml', data: schema};
+    req.body = {gpl: true, user_email: 'user@example.org' }; 
+    res = mocks.createResponse();
+
+    res.send = function (params) {
+      var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
+
+      assert.equal(200, res.statusCode);
+      assert.equal(data.message, 'EDDP Imported Successfully');
+      console.log(res.statusCode);
+      done();
+    }
+    GroundnetController.upload(req, res);
+  })
+
+  it('git test with legal ils xml', (done) => {
+    this.timeout(30000);
+    req = mocks.createRequest();
+    req.params.icao = "KMKE";
+    const schema = fs.readFileSync('test/KMKE.ils.xml');
+    req.files.groundnet = {name: 'KMKE.ils.xml', data: schema};
+    req.body = {gpl: true, user_email: 'user@example.org' }; 
+    res = mocks.createResponse();
+
+    res.send = function (params) {
+      var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
+
+      assert.equal(200, res.statusCode);
+      assert.equal(data.message, 'KMKE Imported Successfully');
+      console.log(res.statusCode);
+      done();
+    }
+    GroundnetController.upload(req, res);
+  })
+  it('git test with legal rwyuse xml', (done) => {
+    this.timeout(30000);
+    req = mocks.createRequest();
+    req.params.icao = "KMKE";
+    const schema = fs.readFileSync('test/KMKE.rwyuse.xml');
+    req.files.groundnet = {name: 'KMKE.rwyuse.xml', data: schema};
+    req.body = {gpl: true, user_email: 'user@example.org' }; 
+    res = mocks.createResponse();
+
+    res.send = function (params) {
+      var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
+
+      assert.equal(200, res.statusCode);
+      assert.equal(data.message, 'KMKE Imported Successfully');
+      console.log(res.statusCode);
+      done();
+    }
+    GroundnetController.upload(req, res);
+  })
+  it('git test with legal threshold xml', (done) => {
+    this.timeout(30000);
+    req = mocks.createRequest();
+    req.params.icao = "KMKE";
+    const schema = fs.readFileSync('test/KMKE.threshold.xml');
+    req.files.groundnet = {name: 'KMKE.threshold.xml', data: schema};
+    req.body = {gpl: true, user_email: 'user@example.org' }; 
+    res = mocks.createResponse();
+
+    res.send = function (params) {
+      var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
+
+      assert.equal(200, res.statusCode);
+      assert.equal(data.message, 'KMKE Imported Successfully');
+      console.log(res.statusCode);
+      done();
+    }
+    GroundnetController.upload(req, res);
+  })
+  it('git test with legal twr xml', (done) => {
+    this.timeout(30000);
+    req = mocks.createRequest();
+    req.params.icao = "KMKE";
+    const schema = fs.readFileSync('test/KMKE.twr.xml');
+    req.files.groundnet = {name: 'KMKE.twr.xml', data: schema};
+    req.body = {gpl: true, user_email: 'user@example.org' }; 
+    res = mocks.createResponse();
+
+    res.send = function (params) {
+      var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
+
+      assert.equal(200, res.statusCode);
+      assert.equal(data.message, 'KMKE Imported Successfully');
+      console.log(res.statusCode);
+      done();
+    }
+    GroundnetController.upload(req, res);
   })
 });
 
@@ -172,6 +292,7 @@ describe('Groundweb', function () {
 function createPath(currentpath) {
   if (fs.existsSync(currentpath))
     return;
+  console.log('Create ' + currentpath);
   fs.mkdirSync(currentpath, { recursive: true }, (err) => {
     console.error('Error creating path', err);
     return;
