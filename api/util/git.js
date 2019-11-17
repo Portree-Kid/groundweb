@@ -173,7 +173,7 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 				var author = NodeGit.Signature.now(email, email);
 				console.log("Committing to refs/heads/" + branchName + "\t" + treeOid);
 
-				var commitOid = await repository.createCommit("HEAD", author, committer, "New Groundnet for " + icao, treeOid, [parent]);
+				var commitOid = await repository.createCommit("HEAD", author, committer, "New AI File for " + icao, treeOid, [parent]);
 				console.log("Committed " + commitOid);
 				console.log("Switching back to master");
 				repository.checkoutBranch("master", {});

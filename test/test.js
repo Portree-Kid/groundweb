@@ -248,6 +248,25 @@ describe('Groundweb', function () {
     }
     GroundnetController.upload(req, res);
   })
+  it('git test with legal CYYZ rwyuse xml', (done) => {
+    this.timeout(30000);
+    req = mocks.createRequest();
+    req.params.icao = "CYYZ";
+    const schema = fs.readFileSync('test/CYYZ.rwyuse.xml');
+    req.files.groundnet = {name: 'CYYZ.rwyuse.xml', data: schema};
+    req.body = {gpl: true, user_email: 'user@example.org' }; 
+    res = mocks.createResponse();
+
+    res.send = function (params) {
+      var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
+
+      assert.equal(200, res.statusCode);
+      assert.equal(data.message, 'CYYZ Imported Successfully');
+      console.log(res.statusCode);
+      done();
+    }
+    GroundnetController.upload(req, res);
+  })
   it('git test with legal threshold xml', (done) => {
     this.timeout(30000);
     req = mocks.createRequest();
