@@ -65,7 +65,8 @@
   </xs:complexType>
   <xs:complexType name="groundnetType">
     <xs:sequence>
-      <xs:element type="xs:byte" name="version" minOccurs="0"/>
+      <xs:element type="xs:string" name="version" minOccurs="0"/>
+      <xs:element type="xs:string" name="email" minOccurs="0"/>
       <xs:element type="frequenciesType" name="frequencies" minOccurs="0"/>
       <xs:element type="parkingListType" name="parkingList"/>
       <xs:element type="TaxiNodesType" name="TaxiNodes" minOccurs="0"/>
