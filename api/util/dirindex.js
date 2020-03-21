@@ -16,6 +16,7 @@ module.exports.buildDirIndex = function(currentpath) {
 		.filter(file => file.name != ".dirindex")
 		.filter(file => file.name != ".git")
 		.forEach(file => {
+			console.log(file);
 			if (file.isFile()) {
 				var sha1 = sha1Hash(fs.readFileSync(path.join(absolutePath, file.name)));
 				var size = fs.statSync(path.join(absolutePath, file.name)).size;
