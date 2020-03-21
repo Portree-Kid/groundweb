@@ -13,9 +13,9 @@ module.exports.buildDirIndex = function(currentpath) {
 		var cleanedPath = currentpath.slice(1).replace(/\\/g, "/");
 		fs.writeSync(wstream, `path:${cleanedPath}\n`);
 	
-		fs.readdirSync(absolutePath, {withFileTypes: true})
-			.filter(file => file !== ".dirindex")
-			.filter(file => file !== ".git")
+		fs.readdirSync(absolutePath, {encoding: 'utf8', withFileTypes: true})
+			.filter(file => file.name !== ".dirindex")
+			.filter(file => file.name !== ".git")
 			.forEach(file => {
 				console.log('*****************\r\n');
 				console.log(file + '\r\n');
