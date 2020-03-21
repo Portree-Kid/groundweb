@@ -13,17 +13,18 @@ module.exports.buildDirIndex = function(currentpath) {
 	fs.writeSync(wstream, `path:${cleanedPath}\n`);
 
 	fs.readdirSync(absolutePath, { withFileTypes: true })
-		.filter(file => file.name != ".dirindex")
-		.filter(file => file.name != ".git")
+		.filter(file => file !== ".dirindex")
+		.filter(file => file !== ".git")
 		.forEach(file => {
 			console.log('*****************\r\n');
 			console.log(file + '\r\n');
+			console.log(typeof file + '\r\n');			
 			if (file.isFile()) {
 				var sha1 = sha1Hash(fs.readFileSync(path.join(absolutePath, file.name)));
 				var size = fs.statSync(path.join(absolutePath, file.name)).size;
 				fs.writeSync(wstream, `f:${file.name}:${sha1}:${size}\n`);
 			}
-			if (file.isDirectory()) {
+			else if (file.isDirectory()) {
 				var subDir = path.join(absolutePath, file.name);
 				fs.readdirSync(subDir, { withFileTypes: true })
 					.filter(subfile => subfile.name == ".dirindex")
