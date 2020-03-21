@@ -51,8 +51,10 @@ module.exports.buildDirIndex = function(currentpath) {
 		console.log(`wrote .dirindex to ${currentpath}`);
 		return path.join(absolutePath, '.dirindex');			
 	} catch (error) {
-		if(wstream !==undefined)
-		  wstream.closeSync();
+		console.error(error);
+		if(wstream !==undefined) {
+			fs.closeSync(wstream);
+		}
 		throw error;
 	}
 }
