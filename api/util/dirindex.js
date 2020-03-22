@@ -5,7 +5,7 @@ const sha1Hash = require('js-sha1')
 
 module.exports.buildDirIndex = function(currentpath) {
 	try {
-		console.log(`writing .dirindex to ${currentpath} with ${process.versions}`);
+		console.log(`writing .dirindex to ${currentpath} with ${JSON.stringify(process.versions)}`);
 		var absolutePath = path.resolve(currentpath);
 	
 		var wstream = fs.openSync(path.join(absolutePath, '.dirindex'), "w+");
