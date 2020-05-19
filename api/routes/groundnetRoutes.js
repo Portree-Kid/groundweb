@@ -26,6 +26,15 @@ module.exports = router;
  */
 router.post('/upload', GroundnetController.upload);
 /**
+ * Service to rebuild the dirindex.
+ * 
+ * @param req
+ * @param res
+ * @returns
+ */
+router.get('/rebuild', GroundnetController.rebuild);
+  
+/**
  * Service to accept a posted file.
  * 
  * @param req
@@ -35,7 +44,7 @@ router.post('/upload', GroundnetController.upload);
 
 router.get('/:icao', GroundnetController.airportGeoJSON);
 
-console.log('Mounted groundnet routes');
+console.log('Mounted groundnet routes ' + GroundnetController.rebuild);
 
 
 
