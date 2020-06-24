@@ -37,8 +37,27 @@ module.exports = {
 		dirindex.buildDirIndex(currentpath)
 		console.log(currentpath);
 		res.send('OK');
-	}
-	,
+	},
+	status(req, res) {
+		res.setHeader('Content-Type', 'application/json');
+		/**
+		 * Callback for all errors
+		 * @param {*} err 
+		 */
+		var errCb = function (err) {
+			if (err) {
+				console.error("*************************************");
+				console.error(err);
+				res.send(err);
+			}
+		};
+		var okCb = function (result) {
+			console.log("Status : " + result);
+			res.send(result);
+		}
+        var gitPath = path.resolve(path.join(terraSyncDir, "/main/"));
+		git.status(gitPath, errCb, okCb, 'https://github.com/terrasync/main.git') 		
+	},
 	upload(req, res) {
 		res.setHeader('Content-Type', 'application/json');
 		if (!req.files) {

@@ -35,6 +35,15 @@ router.post('/upload', GroundnetController.upload);
 router.get('/rebuild', GroundnetController.rebuild);
   
 /**
+ * Service to status of the service.
+ * 
+ * @param req
+ * @param res
+ * @returns
+ */
+router.get('/status', GroundnetController.status);
+
+/**
  * Service to accept a posted file.
  * 
  * @param req
@@ -44,7 +53,7 @@ router.get('/rebuild', GroundnetController.rebuild);
 
 router.get('/:icao', GroundnetController.airportGeoJSON);
 
-console.log('Mounted groundnet routes ' + GroundnetController.rebuild);
+console.log('Mounted groundnet routes ');
 
 
 

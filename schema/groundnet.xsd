@@ -67,10 +67,19 @@
     <xs:sequence>
       <xs:element type="xs:string" name="version" minOccurs="0"/>
       <xs:element type="xs:string" name="email" minOccurs="0"/>
+      <xs:element type="xs:string" name="name" minOccurs="0"/>
+      <xs:element type="logType" name="log" minOccurs="0"/>
       <xs:element type="frequenciesType" name="frequencies" minOccurs="0"/>
       <xs:element type="parkingListType" name="parkingList"/>
       <xs:element type="TaxiNodesType" name="TaxiNodes" minOccurs="0"/>
       <xs:element type="TaxiWaySegmentsType" name="TaxiWaySegments" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="logType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="version" minOccurs="1"/>
+      <xs:element type="xs:string" name="email" minOccurs="0"/>
+      <xs:element type="xs:string" name="name" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
 </xs:schema>

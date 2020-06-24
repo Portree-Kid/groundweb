@@ -3,17 +3,18 @@ var path = require("path");
 var upath = require("upath");
 const homedir = require('os').homedir();
 
+const util = require('util');
+
 
 var credCallback = function (url, userName) {
 	console.log("CredCb User (sshKeyNew) : " + userName + " Url : " + url);
 //  
     try {
-		var pubfile = path.join(process.env.HOME, '.ssh', 'id_rsa.pub');
-		var privfile = path.join(process.env.HOME, '.ssh', 'id_rsa.pub');
-		console.log(pubfile);
-		console.log(privfile);
+		var pubfile = path.join(homedir, '.ssh', 'id_rsa_nodegit.pub');
+		var privfile = path.join(homedir, '.ssh', 'id_rsa_nodegit');
+		// console.log(pubfile);
 		var cred = NodeGit.Cred.sshKeyNew(userName, pubfile, privfile, '');
-		console.log(JSON.stringify(cred));
+		console.log("Cred : " + JSON.stringify(cred));
 		return cred;		
 	} catch (error) {
 		console.error(error);
@@ -23,10 +24,10 @@ var credCallback = function (url, userName) {
 }
 
 var credCallbackOauth = function (url, userName) {
-	console.log("CredCb User (userpassPlaintextNew) : " + userName + " Url : " + url);
+	console.log("CredCb User (x-oauth-basic) : " + userName + " Url : " + url);
 //  
     try {
-			return NodeGit.Cred.userpassPlaintextNew(process.env.API_KEY, "x-oauth-basic");
+		return NodeGit.Cred.userpassPlaintextNew(process.env.API_KEY, "x-oauth-basic");
 	} catch (error) {
 		console.error(error);
 		return Cred.defaultNew();
@@ -40,6 +41,83 @@ var addCb = function (obj) {
 
 var committer = NodeGit.Signature.now("Groundweb",
 	"terrasync@github.com");
+
+
+module.exports.status = function (localPath, errCb, okCb, cloneURL) {
+	console.log("Cloning " + cloneURL + " into " + localPath);
+	try {
+
+
+		// Using the `clone` method from the `Git.Clone` module, bring down the
+		// NodeGit
+		// test repository from GitHub.
+		var myFetchOpts = {
+			callbacks: {
+				certificateCheck: function () { return 0; },
+				credentials: credCallbackOauth,
+				transferProgress: function (stats) {
+					try {
+						const progress = (100 * (stats.receivedObjects() + stats.indexedObjects())) / (stats.totalObjects() * 2);
+						console.log('progress: ', progress)
+					}
+					catch (Err) {
+						console.log('progress error: ' + Err)
+					}
+				}
+			}
+		};
+		// Simple object to store clone options.
+		var cloneOptions = {checkoutBranch: "master", fetchOpts: myFetchOpts};
+		// If the repository already exists, the clone above will fail. You can
+		// simply
+		// open the repository in this case to continue execution.
+		var errorAndAttemptOpen = function (err) {
+			console.log("Clone failed with " + err);
+			console.log("Attempting to open ");
+			return NodeGit.Repository.open(localPath);
+		};
+
+
+		var branchName;
+		// Once the repository has been cloned or opened, you can work with a
+		// returned
+		// `Git.Repository` instance.
+		NodeGit.Clone(cloneURL, localPath, cloneOptions)
+			.then(async function (repo) {
+				console.log("Got Repository Cloned");
+				// Access any repository methods here.
+				repository = repo;
+				await repo.fetchAll(myFetchOpts);
+				var opts = {};
+				status = await repository.getStatus(opts);
+				okCb( JSON.stringify(status) );
+			}).catch(errorAndAttemptOpen)
+			.then(async function (repository) {
+				try {
+					console.log("Got Repository Opened " + repository);
+					// Access any repository methods here.
+					var errFetch = await repository.fetchAll(myFetchOpts);
+					if (errFetch) {
+						errCb(errFetch);
+					}				
+					console.log("Fetched ");
+					var opts = {};
+					var status = await repository.getStatus(opts);
+					status.forEach(s=> console.log(util.inspect(s.status())));	
+					if( status.length === 0) {
+						okCb( {status: 'OK'} );												
+					} else {
+						okCb(util.inspect(status.map(status=>{return {path: status.path(), status: status.status()}})));
+					}						
+				} catch (error) {
+					errCb(error);
+				}
+			});
+		
+	} catch (err) {
+		errCb(err);
+	}
+}
 
 
 module.exports.workflow = function (localPath, icao, email, saveFunction, errCb, okCb, cloneURL) {
