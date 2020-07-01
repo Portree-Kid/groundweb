@@ -45,18 +45,33 @@ module.exports = {
 		 * @param {*} err 
 		 */
 		var errCb = function (err) {
-			if (err) {
-				console.error("*************************************");
-				console.error(err);
-				res.send(err);
-			}
-		};
+			lockFile.unlock('groundweb.lock', function (er) {
+				try {
+					var payload = JSON.stringify({ message: "Error", err }, replaceErrors)
+					res.send(payload);
+				}
+				catch (err) {
+					console.log(err);
+					res.send(JSON.stringify({ message: "Error in Stringify", err }, replaceErrors));
+				}
+			})
+        };
 		var okCb = function (result) {
-			console.log("Status : " + result);
-			res.send(result);
+			lockFile.unlock('groundweb.lock', function (er) {
+				console.log("Status : " + result + ' Lockstatus ' + lockFile.checkSync('groundweb.lock'));
+				res.send(result);
+			})
 		}
-        var gitPath = path.resolve(path.join(terraSyncDir, "/main/"));
-		git.status(gitPath, errCb, okCb, 'https://github.com/terrasync/main.git') 		
+		var opts = { stale: 60000 };
+		lockFile.lock('groundweb.lock', opts, function (er) {
+			if (!er) {
+				var gitPath = path.resolve(path.join(terraSyncDir, "/main/"));
+				git.status(gitPath, errCb, okCb, 'https://github.com/terrasync/main.git') 		
+     		}
+			else {
+				res.send(JSON.stringify({ message: "Import running try again shortly" }));
+			}
+		});
 	},
 	upload(req, res) {
 		res.setHeader('Content-Type', 'application/json');

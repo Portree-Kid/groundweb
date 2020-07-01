@@ -105,9 +105,54 @@ module.exports.status = function (localPath, errCb, okCb, cloneURL) {
 					var status = await repository.getStatus(opts);
 					status.forEach(s=> console.log(util.inspect(s.status())));	
 					if( status.length === 0) {
-						okCb( {status: 'OK'} );												
+						var currentBranch = await repository.getCurrentBranch();
+						var index = await repository.index();
+						var indexVersion = index.version();
+						if (indexVersion<3) {
+							console.log("Version nudge");
+							
+							var result = await index.setVersion(3);
+							if (result<0) {
+								console.error("Couldn't switch version");
+							}
+							result = await index.write();
+							if (result<0) {
+								console.error("Couldn't write index");
+							}
+						}
+
+						var currentBranchName = currentBranch.shorthand();
+						if(currentBranchName!=="master") {
+							repository.checkoutBranch("master", {});
+							okCb( {status: 'OK', indexVersion: indexVersion, statusMsg: 'Switched back to master', branch: currentBranchName} );												
+						} else {
+							okCb( {status: 'OK', indexVersion: indexVersion, branch: currentBranchName} );												
+						}						
 					} else {
-						okCb(util.inspect(status.map(status=>{return {path: status.path(), status: status.status()}})));
+						var currentBranch = await repository.getCurrentBranch();
+
+						var currentBranchName = currentBranch.shorthand();
+
+						var mergeOptions = new NodeGit.MergeOptions();
+						var defaultSignature = NodeGit.Signature.default(repository);
+						console.log(defaultSignature);
+						var result = repository.state();
+						if (result > NodeGit.Repository.STATE.NONE) {
+							console.log("Repostat " + result);
+							errCb("Repo not STATE.NONE");
+							return;
+						}
+		
+						console.log("Repostat " + result);
+		
+						oid = await repository.getBranchCommit("master");
+						console.log("Got Master " + oid);
+
+						var commit = await repository.getReferenceCommit("master");
+						console.log("Resetting to master" + commit);
+						var resetResult =  await NodeGit.Reset.reset(repository, commit, NodeGit.Reset.TYPE.HARD, {});
+		
+						okCb({status: 'OK', git: util.inspect(status.map(status=>{return {path: status.path(), statusMsg: status.status()}}))});
 					}						
 				} catch (error) {
 					errCb(error);
@@ -148,6 +193,7 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 		var cloneOptions = {};
 
 		cloneOptions.checkoutBranch = "master";
+		cloneOptions.version = 4;
 
 		// This is a required callback for OS X machines. There is a known issue
 		// with libgit2 being able to verify certificates from GitHub.
@@ -210,10 +256,9 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 				var reference = await NodeGit.Remote.addPush(repository, "origin", refspec);
 				console.log("Checking out branch " + refspec + "\t" + reference);
 				var checkoutBranch = await repository.checkoutBranch("refs/heads/" + branchName, {});
-				var commit = await repository.getReferenceCommit(
-					"refs/heads/" + branchName);
+				var commit = await repository.getReferenceCommit("refs/heads/" + branchName);
 				console.log("Resetting to refs/heads/" + branchName + " " + commit);
-				var resetResult =  NodeGit.Reset.reset(repository, commit, NodeGit.Reset.TYPE.HARD, {});
+				var resetResult =  await NodeGit.Reset.reset(repository, commit, NodeGit.Reset.TYPE.HARD, {});
 			// Let the file be saved (Callback)
 			    var paths = await saveFunction();
 				if (!paths)
