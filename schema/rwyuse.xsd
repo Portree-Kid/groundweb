@@ -5,7 +5,7 @@
        <xs:element name="rwyuse">
               <xs:complexType>
                      <xs:sequence>
-                            <xs:element name="com" maxOccurs="unbounded">
+                            <xs:element name="com" minOccurs="0" maxOccurs="unbounded">
                                    <xs:complexType>
                                           <xs:sequence>
                                                  <xs:element name="wind">
@@ -24,7 +24,7 @@
                                              </xs:sequence>
                                       </xs:complexType>
                                </xs:element>
-                            <xs:element name="gen" maxOccurs="unbounded">
+                            <xs:element name="gen" minOccurs="0" maxOccurs="unbounded">
                                    <xs:complexType>
                                           <xs:sequence>
                                                  <xs:element name="wind">
