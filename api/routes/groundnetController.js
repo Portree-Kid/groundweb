@@ -17,8 +17,8 @@ function scanSubdir(currentpath) {
 		[...charList].forEach(
 			c => {
 				var subpath = path.resolve(path.join(currentpath, c))
-				console.log(subpath)
 				if (fs.existsSync(subpath)) {
+					console.log('Scanning : ' + subpath)
 					scanSubdir(subpath)
 					dirindex.buildDirIndex(subpath)
 				}

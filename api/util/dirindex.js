@@ -26,8 +26,6 @@ module.exports.buildDirIndex = function(currentpath) {
 						fileContent = fileContent.slice(1);
 					}
    					var sha1 = sha1Hash(fileContent);
-					console.log('xx'+fileContent+'xx');
-					fs.writeFileSync(path.join(absolutePath, '2' + file.name), fileContent);
                 	var size = fileContent.length;
 					fs.writeSync(wstream, `f:${file.name}:${sha1}:${size}\n`);
 				}
