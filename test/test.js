@@ -86,6 +86,35 @@ describe('Git', function () {
     //    createPath(gitPath);
   }).timeout(60000);
 
+  it('git test groundweb KDTW no diff', (done) => {
+
+    var paths = [];
+    var localPath = path.resolve(path.join(terraSyncDir, "/main/"));
+    localPath = path.join(localPath, 'K', 'D', 'T');
+
+    createPath(localPath);    
+    fs.readdirSync(localPath).forEach(file => {
+      console.log(file);
+      fs.unlinkSync(path.join(localPath, file));
+    });
+    fs.copyFileSync('test/KDTW.rwyuse.xml', path.join(localPath, 'KDTW.rwyuse.xml'));
+    console.log('KDTW.rwyuse.xml was copied to KDTW.rwyuse.xml');
+    paths.push(path.join(localPath, 'KDTW.rwyuse.xml'));
+    dirindex.buildDirIndex(localPath);
+    var dirFile = fs.readFileSync(path.join(localPath, '.dirindex'));
+    console.log(dirFile);
+    var lines = String(dirFile).split('\n');
+    assert.equal(lines.length, 4);
+    var fileLine = lines[2].split(':');
+    assert.equal(fileLine.length, 4);
+    assert.equal(fileLine[2], 'ddbe2d49d21eb65bd6746cf9347b40190c0395ff');
+    assert.equal(fileLine[3], 798);
+    sandbox.restore();
+    done();
+
+    //    createPath(gitPath);
+  }).timeout(60000);
+
   it('git test with diff', (done) => {
 
     var mock = sinon.mock(NodeGit);

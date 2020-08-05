@@ -22,8 +22,13 @@ module.exports.buildDirIndex = function(currentpath) {
 //				console.log(typeof file + '\r\n');			
 				if (file.isFile()) {
 					var fileContent = fs.readFileSync(path.join(absolutePath, file.name)).toString().replace(/\r\n/g,'\n');
-					var sha1 = sha1Hash(fileContent);
-					var size = fileContent.length;
+					if (fileContent.charCodeAt(0) === 0xFEFF) {
+						fileContent = fileContent.slice(1);
+					}
+   					var sha1 = sha1Hash(fileContent);
+					console.log('xx'+fileContent+'xx');
+					fs.writeFileSync(path.join(absolutePath, '2' + file.name), fileContent);
+                	var size = fileContent.length;
 					fs.writeSync(wstream, `f:${file.name}:${sha1}:${size}\n`);
 				}
 				else if (file.isDirectory()) {
@@ -33,9 +38,10 @@ module.exports.buildDirIndex = function(currentpath) {
 						.forEach(subfile => {
 							if (subfile.isFile()) {
 								//					console.log(`Building hash for ${subDir}`);
-								var fileContent = fs.readFileSync(path.join(subDir, subfile.name), { encoding: 'ascii' }).toString().replace(/\r\n/g,'\n');
+								var fileContent = fs.readFileSync(path.join(subDir, subfile.name), { encoding: 'ascii' }).toString();
+								fileContent = fileContent.replace(/\r\n/g,'\n');
 								if (!fileContent.startsWith("version:1")) {
-									//						console.log(fileContent);
+								    //console.log(fileContent);
 									throw new Error();
 								}
 								if( fileContent.indexOf('f:') > 0 || fileContent.indexOf('d:') > 0) {
