@@ -1,7 +1,8 @@
 const path = require("path");
 const fs = require('fs');
 const util = require('util');
-const sha1Hash = require('js-sha1')
+const sha1Hash = require('js-sha1');
+const sha1File = require('sha1-file');
 
 module.exports.buildDirIndex = function(currentpath) {
 	try {
@@ -21,13 +22,16 @@ module.exports.buildDirIndex = function(currentpath) {
 //				console.log(util.inspect(file) + '\r\n');
 //				console.log(typeof file + '\r\n');			
 				if (file.isFile()) {
-					var fileContent = fs.readFileSync(path.join(absolutePath, file.name)).toString().replace(/\r\n/g,'\n');
+					var stats = fs.statSync(path.join(absolutePath, file.name));
+					var fileSizeInBytes = stats["size"];
+					var fileContent = fs.readFileSync(path.join(absolutePath, file.name)).toString();
 					if (fileContent.charCodeAt(0) === 0xFEFF) {
+						console.error(`${file.name} has a BOM`);
 						fileContent = fileContent.slice(1);
 					}
-   					var sha1 = sha1Hash(fileContent);
-                	var size = fileContent.length;
-					fs.writeSync(wstream, `f:${file.name}:${sha1}:${size}\n`);
+					var sha1 = sha1File.sync(path.join(absolutePath, file.name)).toString();
+					   
+					fs.writeSync(wstream, `f:${file.name}:${sha1}:${fileSizeInBytes}\n`);
 				}
 				else if (file.isDirectory()) {
 					var subDir = path.join(absolutePath, file.name);
@@ -40,13 +44,14 @@ module.exports.buildDirIndex = function(currentpath) {
 								fileContent = fileContent.replace(/\r\n/g,'\n');
 								if (!fileContent.startsWith("version:1")) {
 								    //console.log(fileContent);
-									throw new Error();
+									throw new Error('Doesn\'t start with version:');
 								}
 								if( fileContent.indexOf('f:') > 0 || fileContent.indexOf('d:') > 0) {
 									sha1 = sha1Hash(fileContent);
 								}
 								else {
-									console.log(fileContent);
+									console.error('No entries');
+									console.error(fileContent);
 								}
 								//					  console.log( path.join(subDir, subfile.name));
 								//					  console.log(sha1);
