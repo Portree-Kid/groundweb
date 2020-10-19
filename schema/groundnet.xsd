@@ -66,6 +66,7 @@
   <xs:complexType name="groundnetType">
     <xs:sequence>
       <xs:element type="xs:string" name="version" minOccurs="0"/>
+      <xs:element type="xs:string" name="fgaversion" minOccurs="0"/>      
       <xs:element type="xs:string" name="email" minOccurs="0"/>
       <xs:element type="xs:string" name="name" minOccurs="0"/>
       <xs:element type="logType" name="log" minOccurs="0"/>
