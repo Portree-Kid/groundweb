@@ -7,7 +7,6 @@ const path = require("path")
 
 var DB = require('../config/database');
 var git = require('../util/git.js');
-var dirindex = require('../util/dirindex.js');
 var github = require('../util/github.js');
 Coordinates = require('coordinate-parser');
 
@@ -20,7 +19,6 @@ function scanSubdir(currentpath) {
 				if (fs.existsSync(subpath)) {
 					console.log('Scanning : ' + subpath)
 					scanSubdir(subpath)
-					dirindex.buildDirIndex(subpath)
 				}
 			}
 		);
@@ -34,7 +32,6 @@ module.exports = {
 		var gitPath = path.resolve(path.join(terraSyncDir, "/main/"));
 		var currentpath = path.join(gitPath, "/Airports/");
 		scanSubdir(currentpath);
-		dirindex.buildDirIndex(currentpath)
 		console.log(currentpath);
 		res.send('OK');
 	},
@@ -193,10 +190,6 @@ module.exports = {
 					var paths = [];
 					fs.writeFileSync(currentpath + path.sep + req.files.groundnet.name, req.files.groundnet.data, { flag: 'w' });
 					paths.push(currentpath + path.sep + req.files.groundnet.name);
-					do {
-						paths.push(dirindex.buildDirIndex(currentpath));
-					}
-					while ((currentpath = path.resolve(currentpath, "..")) != path.resolve(terraSyncDir))
 					return paths;
 				}
 

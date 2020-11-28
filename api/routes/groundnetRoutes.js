@@ -25,15 +25,7 @@ module.exports = router;
  * @returns
  */
 router.post('/upload', GroundnetController.upload);
-/**
- * Service to rebuild the dirindex.
- * 
- * @param req
- * @param res
- * @returns
- */
-router.get('/rebuild', GroundnetController.rebuild);
-  
+
 /**
  * Service to status of the service.
  * 
