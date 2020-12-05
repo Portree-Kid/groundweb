@@ -135,6 +135,28 @@ module.exports = {
 						return;
 					}
 					break;
+				case 'rwyuse':
+						var shedules = sitemapDoc.find('/rwyuse/schedule');
+						if (shedules.length == 0) {
+							res.send(JSON.stringify({ message: "No schedules" }, replaceErrors));
+							return;
+						}
+						shedules.forEach( shedule => {
+							var times = shedule.find("takeoff|landing")
+							var valCount = 0
+							times.forEach( time => {
+								var rwys = time.text().split(',')
+								if( valCount == 0 ) {
+									valCount = rwys.length
+								} else if (valCount != rwys.length) {
+									res.send(JSON.stringify({ message: "Takeoff/Landing length mismatch" }, replaceErrors));
+									return;		
+								}
+							})
+						}
+						)
+
+						break;
 				default:
 					break;
 			}
