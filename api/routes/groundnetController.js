@@ -12,17 +12,17 @@ Coordinates = require('coordinate-parser');
 
 
 function scanSubdir(currentpath) {
-	var charList = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';	
-		[...charList].forEach(
-			c => {
-				var subpath = path.resolve(path.join(currentpath, c))
-				if (fs.existsSync(subpath)) {
-					console.log('Scanning : ' + subpath)
-					scanSubdir(subpath)
-				}
+	var charList = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	[...charList].forEach(
+		c => {
+			var subpath = path.resolve(path.join(currentpath, c))
+			if (fs.existsSync(subpath)) {
+				console.log('Scanning : ' + subpath)
+				scanSubdir(subpath)
 			}
-		);
-	
+		}
+	);
+
 }
 
 
@@ -52,10 +52,10 @@ module.exports = {
 					res.send(JSON.stringify({ message: "Error in Stringify", err }, replaceErrors));
 				}
 			})
-        };
+		};
 		var okCb = function (result) {
 			lockFile.unlock('groundweb.lock', function (er) {
-				console.log("Status : " + result + ' Lockstatus ' + lockFile.checkSync('groundweb.lock'));
+				console.log("Status : " + JSON.stringify(result) + ' Lockstatus ' + lockFile.checkSync('groundweb.lock'));
 				res.send(result);
 			})
 		}
@@ -63,14 +63,15 @@ module.exports = {
 		lockFile.lock('groundweb.lock', opts, function (er) {
 			if (!er) {
 				var gitPath = path.resolve(path.join(terraSyncDir, "/main/"));
-				git.status(gitPath, errCb, okCb, 'https://github.com/terrasync/main.git') 		
-     		}
+				git.status(gitPath, errCb, okCb, 'https://github.com/terrasync/main.git')
+			}
 			else {
 				res.send(JSON.stringify({ message: "Import running try again shortly" }));
 			}
 		});
 	},
 	upload(req, res) {
+		console.log('Upload');
 		res.setHeader('Content-Type', 'application/json');
 		if (!req.files) {
 			res.send(JSON.stringify({ message: "No file provided" }));
@@ -88,158 +89,133 @@ module.exports = {
 			res.send(JSON.stringify({ message: "No E-Mail provided" }));
 			return;
 		}
-		var user;
-		DB.getUserByEmail(req.body.user_email, function (err, user) {
-			if (err) {
-				//res.send(JSON.stringify({ message: "Error getting user", err }, replaceErrors));
-				//return;
-			}
-			//TODO User Check in Production
-			//		if(!user) {
-			//			res.send(JSON.stringify({message:"User unknown", user}));
-			//			return;			
-			//		}
-			//		console.log(user);
+		//Check Filename
+		var groundnetRegex = '([0-9A-Z]{3,4})\\.(groundnet|ils|threshold|twr|rwyuse)\\.xml';
+		var result = req.files.groundnet.name.match(groundnetRegex);
+		if (!result) {
+			res.send(JSON.stringify({ message: "Filename doesn't match known filename pattern" }, replaceErrors));
+			return;
+		}
+		const icao = result[1];
+		const fileType = result[2];
 
-			//Check Filename
-			var groundnetRegex = '([0-9A-Z]{3,4})\\.(groundnet|ils|threshold|twr|rwyuse)\\.xml';
-			var result = req.files.groundnet.name.match(groundnetRegex);
-			if (!result) {
-				res.send(JSON.stringify({ message: "Filename doesn't match known filename pattern" }, replaceErrors));
-				return;
-			}
-			const type = result[2];
-			const schema = fs.readFileSync(`schema/${type}.xsd`);
-			var sitemapDoc;
-			var schemaDoc;
-			// Parse the sitemap and schema
-			try {
-				sitemapDoc = libxmljs.parseXml(req.files.groundnet.data);
-				schemaDoc = libxmljs.parseXml(schema);
-			} catch (e) {
-				res.send(JSON.stringify({ message: "XML Errors", e }, replaceErrors));
-				return;
-			}
-			// Perform XML validation
-			const isValid = sitemapDoc.validate(schemaDoc);
-			if (!isValid) {
-				var validationErrors = sitemapDoc.validationErrors;
-				res.send(JSON.stringify({ message: "XML Errors", validationErrors }, replaceErrors));
-				return;
-			}
-			switch (type) {
-				case 'groundnet':
-					var gates = sitemapDoc.find('/groundnet/parkingList/Parking[@type="gate"]');
-					if (gates.length == 0) {
-						res.send(JSON.stringify({ message: "No gates, traffic won't work" }, replaceErrors));
-						return;
-					}
-					break;
-				case 'rwyuse':
-						var shedules = sitemapDoc.find('/rwyuse/schedule');
-						if (shedules.length == 0) {
-							res.send(JSON.stringify({ message: "No schedules" }, replaceErrors));
+		console.log(`Received request for ${fileType} ${icao}`);
+
+		const schema = fs.readFileSync(`schema/${fileType}.xsd`);
+		var sitemapDoc;
+		var schemaDoc;
+		// Parse the sitemap and schema
+		try {
+			sitemapDoc = libxmljs.parseXml(req.files.groundnet.data);
+			schemaDoc = libxmljs.parseXml(schema);
+		} catch (e) {
+			res.send(JSON.stringify({ message: "XML Errors", e }, replaceErrors));
+			return;
+		}
+		// Perform XML validation
+		const isValid = sitemapDoc.validate(schemaDoc);
+		if (!isValid) {
+			var validationErrors = sitemapDoc.validationErrors;
+			res.send(JSON.stringify({ message: "XML Errors", validationErrors }, replaceErrors));
+			return;
+		}
+		switch (fileType) {
+			case 'groundnet':
+				var gates = sitemapDoc.find('/groundnet/parkingList/Parking[@type="gate"]');
+				if (gates.length == 0) {
+					res.send(JSON.stringify({ message: "No gates, traffic won't work" }, replaceErrors));
+					return;
+				}
+				break;
+			case 'rwyuse':
+				var shedules = sitemapDoc.find('/rwyuse/schedule');
+				if (shedules.length == 0) {
+					res.send(JSON.stringify({ message: "No schedules" }, replaceErrors));
+					return;
+				}
+				shedules.forEach(shedule => {
+					var times = shedule.find("takeoff|landing")
+					var valCount = 0
+					times.forEach(time => {
+						var rwys = time.text().split(',')
+						if (valCount == 0) {
+							valCount = rwys.length
+						} else if (valCount != rwys.length) {
+							res.send(JSON.stringify({ message: "Takeoff/Landing length mismatch" }, replaceErrors));
 							return;
 						}
-						shedules.forEach( shedule => {
-							var times = shedule.find("takeoff|landing")
-							var valCount = 0
-							times.forEach( time => {
-								var rwys = time.text().split(',')
-								if( valCount == 0 ) {
-									valCount = rwys.length
-								} else if (valCount != rwys.length) {
-									res.send(JSON.stringify({ message: "Takeoff/Landing length mismatch" }, replaceErrors));
-									return;		
-								}
-							})
-						}
-						)
+					})
+				}
+				)
 
-						break;
-				default:
-					break;
+				break;
+			default:
+				break;
+		}
+		var gitPath = path.resolve(path.join(terraSyncDir, "/main/"));
+
+		/**
+		 * Callback for all errors
+		 * @param {*} err 
+		 */
+		var errCb = function (err) {
+			if (err) {
+				console.error("*************************************");
+				console.error(err);
+				if (err.errorFunction == 'Branch.create') {
+					//git.removeBranch(gitPath, icao);
+				}
+				lockFile.unlock('groundweb.lock', function (er) {
+					try {
+						var payload = JSON.stringify({ message: "Error in GIT", err }, replaceErrors)
+						res.send(payload);
+					}
+					catch (err) {
+						console.log(err);
+						res.send(JSON.stringify({ message: "Error in Stringify", err }, replaceErrors));
+					}
+				})
+
 			}
+		};
+		var writecb = function () {
+			var currentpath = path.join(gitPath, "/Airports/");
+			createPath(currentpath, res);
+			currentpath = path.join(currentpath, icao[0]);
+			createPath(currentpath, res);
+			currentpath = path.join(currentpath, icao[1]);
+			createPath(currentpath, res);
+			currentpath = path.join(currentpath, icao[2]);
+			createPath(currentpath, res);
+			var paths = [];
+			fs.writeFileSync(currentpath + path.sep + req.files.groundnet.name, req.files.groundnet.data, { flag: 'w' });
+			paths.push(currentpath + path.sep + req.files.groundnet.name);
+			return paths;
+		}
 
-			//Does Airport exist?
-			var icao = result[1];
-			DB.GetAirportByIcao(icao, function (err, airport) {
-				if (err) {
-					//console.error('Error executing query', err);
-					//res.sendStatus(500);
-					//return;
-				}
-				console.log("Result Airportdata : " + airport);
-				if (!airport) {
-					//res.send(JSON.stringify({ message: "Airport doesn't exist" }));
-					//return;
-				}
-				var gitPath = path.resolve(path.join(terraSyncDir, "/main/"));
-
-				/**
-				 * Callback for all errors
-				 * @param {*} err 
-				 */
-				var errCb = function (err) {
-					if (err) {
-						console.error("*************************************");
-						console.error(err);
-						if (err.errorFunction == 'Branch.create') {
-							//git.removeBranch(gitPath, icao);
-						}
-						lockFile.unlock('groundweb.lock', function (er) {
-							try {
-								var payload = JSON.stringify({ message: "Error in GIT", err }, replaceErrors)
-								res.send(payload);
-							}
-							catch (err) {
-								console.log(err);
-								res.send(JSON.stringify({ message: "Error in Stringify", err }, replaceErrors));
-							}
-						})
-
-					}
-				};
-				var writecb = function () {
-					var currentpath = path.join(gitPath, "/Airports/");
-					createPath(currentpath, res);
-					currentpath = path.join(currentpath, icao[0]);
-					createPath(currentpath, res);
-					currentpath = path.join(currentpath, icao[1]);
-					createPath(currentpath, res);
-					currentpath = path.join(currentpath, icao[2]);
-					createPath(currentpath, res);
-					var paths = [];
-					fs.writeFileSync(currentpath + path.sep + req.files.groundnet.name, req.files.groundnet.data, { flag: 'w' });
-					paths.push(currentpath + path.sep + req.files.groundnet.name);
-					return paths;
-				}
-
-				var okCb = function (branchName) {
-					console.log("Opening pull request for " + branchName);
-					github.load(branchName, req.body.user_email)
-						.then((pullReqResult) => {
-							console.log(`statusCode: ${pullReqResult.statusCode}`)
-							//console.log(res)
-							console.log(icao + " Imported Successfully");
-							lockFile.unlock('groundweb.lock', function (er) {
-								res.send(JSON.stringify({ message: "" + icao + " Imported Successfully" }));
-							})
-						})
-						.catch(errCb)
-				}
-				var opts = { stale: 60000 };
-				lockFile.lock('groundweb.lock', opts, function (er) {
-					if (!er) {
-						//https://github.com/terrasync/main.git
-						//'git@github.com:terrasync/main.git'
-						git.workflow(gitPath, icao, req.body.user_email, writecb, errCb, okCb, 'https://github.com/terrasync/main.git');
-					}
-					else {
-						res.send(JSON.stringify({ message: "Import running try again shortly" }));
-					}
-				});
-			});
+		var okCb = function (branchName) {
+			console.log("Opening pull request for " + branchName);
+			github.createPullRequest(branchName, fileType, icao, req.body.user_email)
+				.then((pullReqResult) => {
+					console.log(`statusCode: ${pullReqResult.statusCode}`)
+					//console.log(res)
+					console.log(icao + " Imported Successfully");
+					lockFile.unlock('groundweb.lock', function (er) {
+						res.send(JSON.stringify({ message: "" + fileType + " for " + icao + " Imported Successfully" }));
+					})
+				})
+				.catch(errCb)
+		}
+		var opts = { stale: 60000 };
+		lockFile.lock('groundweb.lock', opts, function (er) {
+			if (!er) {
+				//https://github.com/terrasync/main.git
+				//'git@github.com:terrasync/main.git'
+				git.workflow(gitPath, fileType, icao, req.body.user_email, writecb, errCb, okCb, 'https://github.com/terrasync/main.git');
+			}
+			else {
+				res.send(JSON.stringify({ message: "Import running try again shortly" }));
+			}
 		});
 	},
 

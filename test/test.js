@@ -77,7 +77,7 @@ describe('Git', function () {
         done("Shouldn't be OK");
       };
       var cloneURL;
-      git.workflow(localPath, 'EDDP', email, saveFunction, errCb, okCb, "file:///" + upstreamPath);
+      git.workflow(localPath, 'groundnet', 'EDDP', email, saveFunction, errCb, okCb, "file:///" + upstreamPath);
 
       //sandbox.assert.calledOnce(stub);
       sandbox.restore();
@@ -124,7 +124,7 @@ describe('Git', function () {
         console.log("Ok called " + branchname);
         checkLastCommit(localPath, "refs/heads/" + branchname).then(() => {  done(); }).catch((err) => {  done(err); });
       };
-      git.workflow(localPath, 'EDDP', email, saveFunction, errCb, okCb, "file:///" + upstreamPath);
+      git.workflow(localPath, 'groundnet', 'EDDP', email, saveFunction, errCb, okCb, "file:///" + upstreamPath);
 
       //sandbox.assert.calledOnce(stub);
 
@@ -138,12 +138,13 @@ describe('Groundweb', function () {
   this.timeout(30000);
 
   this.beforeEach(function (done) {    
-    var stub = sandbox.replace(git, "workflow", function (localPath, icao, email, saveFunction, errCb, okCb, cloneURL) {
+    var stub = sandbox.replace(git, "workflow", function (localPath, fileType, icao, email, saveFunction, errCb, okCb, cloneURL) {
       console.log("Workflow  " + localPath);
       okCb();
     });
 
-    var githubLoad = sandbox.replace( github, 'load', function (branch, email) { return new Promise(function(resolve, reject) { 
+    var githubLoad = sandbox.replace( github, 'createPullRequest', function (branch, fileType, icao, email) { return new Promise(function(resolve, reject) { 
+      console.log(branch, fileType, icao, email);
       resolve({statusCode: 200});
     });
   })
@@ -205,7 +206,7 @@ describe('Groundweb', function () {
         var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
   
         assert.equal(200, res.statusCode);
-        assert.equal(data.message, 'EDDP Imported Successfully');
+        assert.equal(data.message, 'groundnet for EDDP Imported Successfully');
         console.log(res.statusCode);
         done();
       }
@@ -228,7 +229,7 @@ describe('Groundweb', function () {
         var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
   
         assert.equal(200, res.statusCode);
-        assert.equal(data.message, 'KMKE Imported Successfully');
+        assert.equal(data.message, 'ils for KMKE Imported Successfully');
         console.log(res.statusCode);
         done();
       }
@@ -251,7 +252,7 @@ describe('Groundweb', function () {
         var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
   
         assert.equal(200, res.statusCode);
-        assert.equal(data.message, 'CYYZ Imported Successfully');
+        assert.equal(data.message, 'rwyuse for CYYZ Imported Successfully');
         console.log(res.statusCode);
         done();
       }
@@ -271,7 +272,7 @@ describe('Groundweb', function () {
         var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
   
         assert.equal(200, res.statusCode);
-        assert.equal(data.message, 'KMKE Imported Successfully');
+        assert.equal(data.message, 'rwyuse for KMKE Imported Successfully');
         console.log(res.statusCode);
         done();
       }
@@ -312,7 +313,7 @@ describe('Groundweb', function () {
         var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
   
         assert.equal(200, res.statusCode);
-        assert.equal(data.message, 'KMKE Imported Successfully');
+        assert.equal(data.message, 'threshold for KMKE Imported Successfully');
         console.log(res.statusCode);
         done();
       }
@@ -334,7 +335,7 @@ describe('Groundweb', function () {
         var data = JSON.parse(params); // short-hand for JSON.parse( res._getData() );
   
         assert.equal(200, res.statusCode);
-        assert.equal(data.message, 'KMKE Imported Successfully');
+        assert.equal(data.message, 'twr for KMKE Imported Successfully');
         console.log(res.statusCode);
         done();
       }

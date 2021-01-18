@@ -3,11 +3,11 @@ const axios = require('axios')
 var uname = process.env.GIT_USER;
 var pass = process.env.API_KEY;
 
-module.exports.load =
-    function (branch, email) {
+module.exports.createPullRequest =
+    function (branch, fileType, icao, email) {
         var dat = {
-            title : branch, 
-            body : "Submitted by " + email,
+            title : `New ${fileType} for ${icao}`, 
+            body : `A new ${fileType} has been submitted by ${email}. `,
             head: branch, 
             base : 'master'
         };
@@ -22,10 +22,3 @@ module.exports.load =
             }
         )
     }
-/**
- *             "title" : 'Changed groundweb for  ' + branch, 
-            "body" : 'Posted by ' + email, 
-            head: branch, 
-            base : 'master'
-
- */

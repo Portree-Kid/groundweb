@@ -1,48 +1,104 @@
 <html>
 <style type="text/css">
-
-iframe {
-width: 300px;
-height: 100px;
-}
-
+  iframe {
+    width: 300px;
+    height: 100px;
+  }
 </style>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
   function checkStatus() {
-    var iFrameDoc =  $( "[name='status']" )[0].contentDocument ||  $( "[name='status']" )[0].contentWindow.document;
+    document.getElementById("status").style.display = "block"
+    var iFrameDoc = $("[name='status']")[0].contentDocument || $("[name='status']")[0].contentWindow.document;
     iFrameDoc.write('Checking Azure');
-    iFrameDoc.close(); 
+    iFrameDoc.close();
 
-      var myButton = $( "[name='myButton']" )[0];
+    var myButton = $("[name='myButton']")[0];
     myButton.disabled = true;
-    $.getJSON('groundnets/status', function(data) {
-      if( data.status === 'OK') {
-        $( "[name='myButton']" )[0].disabled = false;
+    $.getJSON('groundnets/status', function (data) {
+      if (data.status === 'OK') {
+        $("[name='myButton']")[0].disabled = false;
       }
-      var iFrameDoc =  $( "[name='status']" )[0].contentDocument ||  $( "[name='status']" )[0].contentWindow.document;
+      document.getElementById("status").style.display = "block"
+      var iFrameDoc = $("[name='status']")[0].contentDocument || $("[name='status']")[0].contentWindow.document;
       iFrameDoc.write('Azure : ' + data.status);
-      iFrameDoc.close(); 
+      iFrameDoc.close();
       console.log(data.status);
-  });
-}
+    });
+  }
+  function newFile(e) {    
+		var groundnetRegex = '([0-9A-Z]{3,4})\\.(groundnet|ils|threshold|twr|rwyuse)\\.xml';
+    console.log(e);
+    var filename = e.target.value.split(/[\\\/]/).slice(-1)[0];
+		var result = filename.match(groundnetRegex);
+		if (!result) {
+      var iFrameDoc = $("[name='status']")[0].contentDocument || $("[name='status']")[0].contentWindow.document;
+      iFrameDoc.write('Filepattern doesn\'t match');
+      iFrameDoc.close();
+      $("[name='myButton']")[0].disabled = true;      
+		} else {
+      const icao = result[1];
+  		const fileType = result[2];
+      document.getElementById("status").style.display = "none"
+      $("[name='myButton']")[0].disabled = false;
+      document.getElementById("groundnet").style.display = "none"
+      document.getElementById("ils").style.display = "none"
+      document.getElementById("threshold").style.display = "none"
+      document.getElementById("twr").style.display = "none"
+      document.getElementById("rwyuse").style.display = "none"
+      var x = document.getElementById(fileType);
+      x.style.display = "block";
+    }
+  }
+  function submitCb(e) {
+      $("[name='myButton']")[0].disabled = true;
+      document.getElementById("status").style.display = "none"
+      document.getElementById("result").style.display = "block"
+    }
 </script>
 
 <body onload="checkStatus()">
-  <form id="request_form" method="post" enctype="multipart/form-data" action="groundnets/upload" target="result" onsubmit="myButton.disabled = true;" >
-    <label>Email (not checked but used for commit) </label> 
-    <input name="user_email" type="text"/>  <BR>
-    <label>I agree to release my content under the GPL v2 </label> <input name="gpl" type="checkbox"/>    
+  <form id="request_form" method="post" enctype="multipart/form-data" action="groundnets/upload" target="result"
+    onsubmit="submitCb(event)">
+    <label>Email (not checked but used for commit) </label>
+    <input name="user_email" type="text" /> <BR>
+    <label>I agree to release my content under the GPL v2 </label> <input name="gpl" type="checkbox" />
     <br>
-    <label>Your groundnet file (groundnet/rwyuse)
-      <input name="groundnet" type="file" size="50" accept="text/*"> 
-    </label><BR>  
+    <label>Your groundnet file (groundnet|ils|threshold|twr|rwyuse)
+      <input name="groundnet" type="file" size="50" accept="text/*" onchange="newFile(event)">
+    </label><BR>
     <button name="myButton">Upload</button>
   </form>
   <!--<a href="/main/Airports/">Uploaded content &#40; TerraSync compatible &#41;</a><br>-->
-  <iframe name="status" frameBorder="0"></iframe>
-  <iframe name="result" frameBorder="0"></iframe>  
+
+  <div id="status" style="display: none;">
+    <iframe name="status" frameBorder="0"></iframe>
+  </div>
+  <div id="result" style="display: none;">
+    <iframe name="result" frameBorder="0"></iframe>
+  </div>
+
+  <div id="groundnet" style="display: none;">
+    <h3>groundnet</h3>
+    This file type is part of the AI system. 
+  </div>
+  <div id="rwyuse" style="display: none;">
+    <h3>rwyuse</h3>
+    This file type is part of the AI system. 
+  </div>
+  <div id="threshold" style="display: none;">
+    <h3>threshold</h3>
+    This file type is scenery relevant and can take some time to review.
+  </div>
+  <div id="ils" style="display: none;">
+    <h3>ils</h3>
+    This file type is scenery relevant and can take some time to review.
+  </div>
+  <div id="twr" style="display: none;">
+    <h3>twr</h3>
+    This file type is scenery relevant and can take some time to review.
+  </div>
 </body>
 
 </html>

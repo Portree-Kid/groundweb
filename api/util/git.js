@@ -78,7 +78,6 @@ module.exports.status = function (localPath, errCb, okCb, cloneURL) {
 		};
 
 
-		var branchName;
 		// Once the repository has been cloned or opened, you can work with a
 		// returned
 		// `Git.Repository` instance.
@@ -94,7 +93,7 @@ module.exports.status = function (localPath, errCb, okCb, cloneURL) {
 			}).catch(errorAndAttemptOpen)
 			.then(async function (repository) {
 				try {
-					console.log("Got Repository Opened " + repository);
+					console.log("Got Repository Opened Status : " + JSON.stringify(repository));
 					// Access any repository methods here.
 					var errFetch = await repository.fetchAll(myFetchOpts);
 					if (errFetch) {
@@ -109,7 +108,7 @@ module.exports.status = function (localPath, errCb, okCb, cloneURL) {
 						var index = await repository.index();
 						var indexVersion = index.version();
 						if (indexVersion<3) {
-							console.log("Version nudge");
+							console.log("Version nudge to Index Version 3");
 							
 							var result = await index.setVersion(3);
 							if (result<0) {
@@ -164,8 +163,19 @@ module.exports.status = function (localPath, errCb, okCb, cloneURL) {
 	}
 }
 
+/**
+ * 
+ * @param {*} localPath 
+ * @param {*} fileType 
+ * @param {*} icao 
+ * @param {*} email 
+ * @param {*} saveFunction 
+ * @param {*} errCb 
+ * @param {*} okCb 
+ * @param {*} cloneURL 
+ */
 
-module.exports.workflow = function (localPath, icao, email, saveFunction, errCb, okCb, cloneURL) {
+module.exports.workflow = function (localPath, fileType, icao, email, saveFunction, errCb, okCb, cloneURL) {
 	console.log("Cloning " + cloneURL + " into " + localPath);
 	try {
 
@@ -247,7 +257,7 @@ module.exports.workflow = function (localPath, icao, email, saveFunction, errCb,
 				oid = await repository.getBranchCommit("master");
 				console.log("Got Master " + oid);
 				// create the branch
-				branchName = icao + '_' + Date.now();
+				branchName = fileType.toUpperCase() + '_' + icao + '_' + Date.now();
 				branch = await NodeGit.Branch.create(repository, branchName, oid, 0);
 				console.log("Setting upstream " + branchName);
 				var branch = await NodeGit.Branch.setUpstream(branch, branchName);
